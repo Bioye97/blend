@@ -4,7 +4,7 @@
 
 Plots averaging kernels on the support of arbitrary space. 
 
-One major application is the smooth merging of multidimensional datasets defined on regular grids, like so:
+One major application is the smooth merging of multidimensional datasets defined on regular grids.
 
 ![Blending weights from a cosine taper function defined on the support of an isotoxal star](doc/star.png)
 
