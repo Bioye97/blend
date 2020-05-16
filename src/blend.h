@@ -44,16 +44,16 @@ typedef enum { ROW_STEP = 0,
 
 /* Struct for the permuted vertices */
 typedef struct permuted_vertex_t {
-	/* Bottom vertices (2D array) */
-	double **bottom_vertices;
+    /* Bottom vertices (2D array) */
+    double **bottom_vertices;
     /* Dimension of bottom vertices array */
     int row_size_bv;
-	/* Bottom-to-left vertices (2D array) */
-	double **bottom_to_left_vertices;
+    /* Bottom-to-left vertices (2D array) */
+    double **bottom_to_left_vertices;
     /* Dimension of bottom-to-left vertices array */
     int row_size_btlv;
-	/* Left vertices (2D array) */
-	double **left_vertices;
+    /* Left vertices (2D array) */
+    double **left_vertices;
     /* Dimension of left vertices array */
     int row_size_lv;
     /* Left-to_top vertices (2D array) */
@@ -83,31 +83,31 @@ typedef struct window_t {
     /* row length of vertices array */
     int row_size;
     /* Polygon boundaries (2D array) - assigned from the model */
-	double **vertices;
+    double **vertices;
     /* Assembly mode - Needed for hanging sweep! */
     assembly_type_t amode;
     /* Model dimensions */
     int nx;
     int ny;
     int nz;
-	/* Row-stepping vectors (1D array): nnx2 >= nnx1 */
+    /* Row-stepping vectors (1D array): nnx2 >= nnx1 */
     int *nnx1; 
-	int *nnx2; 
-	/* Column-stepping vectors (1D array): nny2 >= nny1 */
-	int *nny1;
-	int *nny2;
-	/* Minimum length of row-stepping vectors */
-	int minnx;
-	/* Minimum length of column-stepping vectors */
-	int minny;
+    int *nnx2; 
+    /* Column-stepping vectors (1D array): nny2 >= nny1 */
+    int *nny1;
+    int *nny2;
+    /* Minimum length of row-stepping vectors */
+    int minnx;
+    /* Minimum length of column-stepping vectors */
+    int minny;
     /* Taper ratio: user defined */
-	double ratio;
-	/* Window function in x: user defined */
+    double ratio;
+    /* Window function in x: user defined */
     char x_function[MAX_WINDOWFUNC_LEN];
-	/* Window function in y: user defined */
-	char y_function[MAX_WINDOWFUNC_LEN];
-	/* Window function in z: user defined */
-	char z_function[MAX_WINDOWFUNC_LEN];
+    /* Window function in y: user defined */
+    char y_function[MAX_WINDOWFUNC_LEN];
+    /* Window function in z: user defined */
+    char z_function[MAX_WINDOWFUNC_LEN];
     /* Contribution: blending weights */
     double contribution;
 } window_t;
