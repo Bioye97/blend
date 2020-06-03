@@ -2,7 +2,7 @@
 
 ## Summary
 
-Plots averaging kernels on the support of arbitrary space. 
+Defines averaging kernels on the support of arbitrary space. 
 
 One major application is the smooth merging of multidimensional datasets defined on regular grids.
 
