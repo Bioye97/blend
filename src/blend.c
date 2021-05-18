@@ -1919,7 +1919,7 @@ double cosine(int x, int n, int nmax, int nmin, double r1, double r2) {
     }
 
     else if (x <= ni) {
-        t = (2 * (double)x)/(2 * (double)ni);
+        t = ((2 * (double)x) - 1)/(2 * (double)ni);
         value = 0.5 * (1 - cos(M_PI * t));
     }
 
@@ -1947,7 +1947,7 @@ double scosine(int x, int n, int nmax, int nmin, double r) {
         value = 1;
     }
     else {
-        t = (2 * (double)x)/(2 * (double)ni);
+        t = ((2 * (double)x) - 1)/(2 * (double)ni);
         value = 0.5 * (1 - cos(M_PI * t));
     }
 
@@ -1996,13 +1996,13 @@ double trapezoid(int x, int n, int nmax, int nmin, double r1, double r2) {
     }
 
     else if (x <= ni) {
-        t = (2 * (double)x)/(2 * (double)ni);
-        value = 0.5 * (1 - cos(M_PI * t));
+        t = ((2 * (double)x) - 1)/(2 * (double)ni);
+        value = t;
     }
 
     else {
         t = (2 * ((double)x - (double)n + 2 * (double)nf) - 1)/(2 * (double)nf);
-        value = 0.5 * (1 - cos(M_PI * t));
+        value = 2 - t;
     }
 
     return value;
@@ -2023,8 +2023,8 @@ double strapezoid(int x, int n, int nmax, int nmin, double r) {
         value = 1;
     }
     else {
-        t = (2 * (double)x)/(2 * (double)ni);
-        value = 0.5 * (1 - cos(M_PI * t));
+        t = ((2 * (double)x) - 1)/(2 * (double)ni);
+        value = t;
     }
 
     return value;
@@ -2046,7 +2046,10 @@ double etrapezoid(int x, int n, int nmax, int nmin, double r) {
     if (x > n - nf) {
 
         t = (2 * ((double)x - (double)n + 2 * (double)nf) - 1)/(2 * (double)nf);
-        value = 0.5 * (1 - cos(M_PI * t));
+        value = 2 - t;
+    }
+    else {
+        value = 1;
     }
 
     return value;
