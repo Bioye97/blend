@@ -1,3 +1,8 @@
+/*
+* Author: Rasheed Ajala
+* Contact: abioyeajala@gmail.com
+*/
+
 #ifndef BLEND_H
 #define BLEND_H
 
@@ -176,6 +181,8 @@ int maximum_columnstep(window_t *data, permuted_vertex_t *vertex);
 /* Assemble the boundary and stepping vectors for window function */
 int boundary_assembly(window_t *data, permuted_vertex_t *vertex);
 
+/* TODO: implement solution to finding a close xy-montone boundary */
+
 /* Window/Taper function */
 double window_function(int x, int x1, int x2, int n, int nmin, double r, char func[MAX_WINDOWFUNC_LEN]);
 
@@ -202,5 +209,8 @@ double etrapezoid(int x, int n, int nmax, int nmin, double r);
 
 /* Embedding contribution: Blending weight */
 int embedding_contribution(int x, int y, int z, window_t *data);
+
+/* Embedding contribution for 2D case: Blending weight */
+int embedding_contribution2d(int x, int y, window_t *data);
 
 #endif /* BLEND_H */

@@ -1,3 +1,8 @@
+/*
+* Author: Rasheed Ajala
+* Contact: abioyeajala@gmail.com
+*/
+
 #include "blend.h"
 
 int unique_vertices(double **array, int row_length) {
@@ -2170,3 +2175,38 @@ int embedding_contribution(int x, int y, int z, window_t *data) {
 
     return SUCCESS;
 }
+
+/* Embedding contribution 2D */
+int embedding_contribution2d(int x, int y, window_t *data) {
+
+    int nny1, nny2, nnx1, nnx2;
+    double taper_x, taper_y;
+    /* First define the values of these vectors */
+    nny1 = data->nny1[x];
+    nny2 = data->nny2[x];
+    nnx1 = data->nnx1[y];
+    nnx2 = data->nnx2[y];
+
+    /* get taper_x: TODO: remove the +1 after generalization  */
+    taper_x = window_function(y+1, nny1+1, nny2+1, data->ny, data->minny, data->ratio, data->x_function);
+    /* Error check */
+    if (taper_x == WFUNC_ERROR) {
+        fprintf(stderr, "An error occured when trying to compute the weight from x_function. \n");
+        return FAIL;
+    }
+
+
+    /* get taper_y: TODO: remove the +1 after generalization */
+    taper_y = window_function(x+1, nnx1+1, nnx2+1, data->nx, data->minnx, data->ratio, data->y_function);
+    /* Error check */
+    if (taper_y == WFUNC_ERROR) {
+        fprintf(stderr, "An error occured when trying to compute the weight from y_function. \n");
+        return FAIL;
+    }
+
+    /* Assemble output */
+    data->contribution = taper_x * taper_y;
+
+    return SUCCESS;
+}
+
