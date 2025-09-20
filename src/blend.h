@@ -31,6 +31,7 @@
 #define WFUNC_ERROR 2.0
 
 /* Currently defined window functions */
+/* TODO: Use a list/enum here - move to blend_windows.c, blend_windows.h */
 #define WFUNC_BOXCAR "boxcar"
 #define WFUNC_COSINE "cosine"
 #define WFUNC_COSINE_START "scosine"
