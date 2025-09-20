@@ -1,6 +1,7 @@
 /*
 * Author: Rasheed Ajala
 * Contact: abioyeajala@gmail.com
+*
 */
 
 #include "blend.h"
