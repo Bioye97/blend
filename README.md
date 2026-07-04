@@ -44,6 +44,13 @@ set (CMAKE_INSTALL_PREFIX "/usr/local/opt/blend")
 See the comments in `cmake/ConfigUserTemplate.cmake` for additional settings,
 including install directories, static/shared library selection, and tests.
 
+To build and run tests during installation, enable tests in
+`cmake/ConfigUser.cmake`:
+
+```cmake
+set (BLEND_BUILD_TESTS ON)
+```
+
 After making configuration choices, create a build directory and invoke CMake
 from there:
 
@@ -84,24 +91,62 @@ This installs the BLEND libraries, public header, and CMake package files to the
 location set by `CMAKE_INSTALL_PREFIX` in `cmake/ConfigUser.cmake`. Depending on
 the installation location, you may need write permission for this step.
 
+### Updating an existing installation
+
+If BLEND was already installed and you want to update to the latest version
+from Git, pull the latest changes, update the build directory, rebuild, and
+install again:
+
+```sh
+cd /path/to/blend
+git pull
+cd build
+cmake ..
+cmake --build .
+cmake --build . --target install
+```
+
+If you use a local `cmake/ConfigUser.cmake`, keep it in place so the updated
+installation uses the same install prefix and options as before. Depending on
+the installation location, you may need write permission for the install step.
+
+To update and run the test suite before installing, first enable tests in
+`cmake/ConfigUser.cmake`:
+
+```cmake
+set (BLEND_BUILD_TESTS ON)
+```
+
+Then rebuild and run `ctest`:
+
+```sh
+cd /path/to/blend
+git pull
+cd build
+cmake ..
+cmake --build .
+ctest
+cmake --build . --target install
+```
+
 ### Uninstalling
 
 The install step also installs a helper script:
 
 ```sh
-share/tools/blend_uninstall.sh
+./share/tools/blend_uninstall.sh
 ```
 
 Run it from the installation prefix to remove BLEND files:
 
 ```sh
-share/tools/blend_uninstall.sh
+./share/tools/blend_uninstall.sh
 ```
 
 Preview removals first with:
 
 ```sh
-share/tools/blend_uninstall.sh --dry-run
+./share/tools/blend_uninstall.sh --dry-run
 ```
 
 ### Running tests
