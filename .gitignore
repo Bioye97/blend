@@ -1,3 +1,28 @@
-LICENSE.TXT
-./test
-./doc
+.DS_Store
+
+# User-local CMake configuration
+cmake/ConfigUser.cmake
+cmake/ConfigUserAdvanced.cmake
+
+# Build directories and generated build output
+build/
+cmake-build-*/
+blend-install/
+autom4te.cache/
+aclocal.m4
+configure
+INSTALL
+Makefile.in
+src/Makefile.in
+compile
+install-sh
+missing
+
+# Compiled objects and libraries
+*.o
+*.a
+*.so
+*.dylib
+
+# Test binaries
+tests/blend_api_test

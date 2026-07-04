@@ -1,0 +1,23 @@
+2026-07-03  BLEND 1.0.2
+
+	Changes since version 1.0.1:
+
+	* Added CMake build and installation support for BLEND.
+	* Added GMT-style CMake configuration files:
+	  cmake/ConfigDefault.cmake and cmake/ConfigUserTemplate.cmake.
+	* Added installed CMake package files so downstream projects can use
+	  find_package(blend CONFIG REQUIRED).
+	* Installed the public header as include/blend/blend.h.
+	* Exported CMake targets BLEND::blend and BLEND::blend_static.
+	* Removed legacy Make/Autotools build files from the source tree.
+	* Updated README.md with GMT-style build, configuration, installation,
+	  test, package-consumption, and license instructions.
+	* Replaced legacy standalone tests with tests/blend_api_test.c.
+	* Added direct coverage for every public function declared in src/blend.h
+	  and implemented in src/blend.c.
+	* Registered the API test with CTest via BLEND_BUILD_TESTS.
+	* Licensed BLEND under the GNU Lesser General Public License version 3
+	  or any later version.
+	* Added LGPLv3 and GPLv3 license texts as COPYING.LESSER and COPYING.
+	* Installed license files with the package documentation.
+	* Added share/tools/blend_uninstall.sh to remove installed BLEND files.

@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/blend-targets.cmake")
+
+if(NOT TARGET BLEND::blend AND TARGET BLEND::blend_static)
+  add_library(BLEND::blend INTERFACE IMPORTED)
+  target_link_libraries(BLEND::blend INTERFACE BLEND::blend_static)
+endif()
+
+set(BLEND_VERSION "@PROJECT_VERSION@")
+set(BLEND_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
+set(BLEND_LIBRARIES BLEND::blend)

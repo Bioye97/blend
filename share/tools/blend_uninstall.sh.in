@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+#
+# Uninstall files installed by BLEND.
+
+set -e
+
+prefix="@CMAKE_INSTALL_PREFIX@"
+dry_run=0
+
+usage()
+{
+	cat << EOF
+Usage: blend_uninstall.sh [--prefix PATH] [--dry-run] [--help]
+
+Remove files installed by BLEND under the configured installation prefix.
+
+Options:
+  --prefix PATH  Override the installation prefix [${prefix}]
+  --dry-run      Print files that would be removed, but do not remove them
+  --help         Show this help message
+EOF
+}
+
+remove_path()
+{
+	if [ -e "$1" ] || [ -L "$1" ]; then
+		if [ "${dry_run}" -eq 1 ]; then
+			printf 'Would remove %s\n' "$1"
+		else
+			rm -f "$1"
+			printf 'Removed %s\n' "$1"
+		fi
+	fi
+}
+
+remove_empty_dir()
+{
+	if [ -d "$1" ]; then
+		if [ "${dry_run}" -eq 1 ]; then
+			printf 'Would remove directory if empty %s\n' "$1"
+		else
+			rmdir "$1" 2>/dev/null || true
+		fi
+	fi
+}
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--prefix)
+			if [ "$#" -lt 2 ]; then
+				printf 'blend_uninstall.sh: --prefix requires a path\n' >&2
+				exit 1
+			fi
+			prefix="$2"
+			shift 2
+			;;
+		--dry-run)
+			dry_run=1
+			shift
+			;;
+		--help|-h)
+			usage
+			exit 0
+			;;
+		*)
+			printf 'blend_uninstall.sh: unknown option %s\n' "$1" >&2
+			usage >&2
+			exit 1
+			;;
+	esac
+done
+
+libdir="${prefix}/@BLEND_INSTALL_LIBDIR@"
+includedir="${prefix}/@BLEND_INSTALL_INCLUDEDIR@"
+cmakedir="${prefix}/@BLEND_INSTALL_CMAKEDIR@"
+docdir="${prefix}/@CMAKE_INSTALL_DATADIR@/doc/blend"
+tooldir="${prefix}/@CMAKE_INSTALL_DATADIR@/tools"
+
+remove_path "${libdir}/libblend.a"
+remove_path "${libdir}/libblend.dylib"
+remove_path "${libdir}/libblend.@BLEND_LIB_SOVERSION@.dylib"
+remove_path "${libdir}/libblend.@BLEND_LIB_VERSION@.dylib"
+remove_path "${libdir}/libblend.so"
+remove_path "${libdir}/libblend.so.@BLEND_LIB_SOVERSION@"
+remove_path "${libdir}/libblend.so.@BLEND_LIB_VERSION@"
+
+remove_path "${includedir}/blend.h"
+
+remove_path "${cmakedir}/blend-config.cmake"
+remove_path "${cmakedir}/blend-config-version.cmake"
+remove_path "${cmakedir}/blend-targets.cmake"
+remove_path "${cmakedir}/blend-targets-release.cmake"
+remove_path "${cmakedir}/blend-targets-debug.cmake"
+remove_path "${cmakedir}/blend-targets-relwithdebinfo.cmake"
+remove_path "${cmakedir}/blend-targets-minsizerel.cmake"
+
+remove_path "${docdir}/ChangeLog"
+remove_path "${docdir}/LICENSE.TXT"
+remove_path "${docdir}/COPYING"
+remove_path "${docdir}/COPYING.LESSER"
+
+remove_path "${tooldir}/blend_uninstall.sh"
+
+remove_empty_dir "${cmakedir}"
+remove_empty_dir "$(dirname "${cmakedir}")"
+remove_empty_dir "${includedir}"
+remove_empty_dir "${docdir}"
+remove_empty_dir "${tooldir}"
+
+if [ "${dry_run}" -eq 1 ]; then
+	printf 'Dry run complete.\n'
+else
+	printf 'BLEND uninstall complete.\n'
+fi
