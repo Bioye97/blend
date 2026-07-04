@@ -142,7 +142,7 @@ for details.
 
 ## Citation
 
-If you use BLEND in published work, please cite the relevant reference:
+If you use BLEND in published work, please cite the relevant references:
 
 1. Ajala, R., & Persaud, P. (2021).
    [Effect of merging multiscale models on seismic wavefield predictions near
@@ -156,6 +156,6 @@ If you use BLEND in published work, please cite the relevant reference:
 3. Ajala, R., Kolawole, F., Share, P. E., Sahakian, V., Delph, J. R.,
    Hooft, E., & He, B. (2025).
    [Toward an accessible framework for synthesizing solid earth models across
-   multiple scales](https://scholar.google.com/scholar?q=Toward+an+accessible+framework+for+synthesizing+solid+earth+models+across+multiple+scales).
+   multiple scales](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales).
    In `Seismological Society of America Annual Meeting`, Baltimore, Maryland,
    USA, vol. 96, p. 1364.
