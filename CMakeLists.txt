@@ -18,9 +18,10 @@ include(CMakePackageConfigHelpers)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 include(BlendInstallDirs)
 
-option(BLEND_BUILD_TESTS "Build BLEND sample test executables" ${BLEND_BUILD_TESTS})
+option(BLEND_BUILD_TESTS "Build BLEND test executables" ${BLEND_BUILD_TESTS})
 option(BLEND_BUILD_SHARED "Build the BLEND shared library" ${BLEND_BUILD_SHARED})
 option(BLEND_BUILD_STATIC "Build the BLEND static library" ${BLEND_BUILD_STATIC})
+option(BLEND_BUILD_EXAMPLES "Build BLEND example executables" ${BLEND_BUILD_EXAMPLES})
 
 set(BLEND_EXPORT_TARGETS)
 
@@ -86,6 +87,17 @@ if(BLEND_BUILD_TESTS)
 
 endif()
 
+if(BLEND_BUILD_EXAMPLES)
+  foreach(example ex01 ex02 ex03 ex04 ex05 ex06 ex07 ex08 ex09 ex10 ex11 ex12)
+    add_executable(${example} doc/examples/${example}/${example}.c)
+    if(TARGET blend_static)
+      target_link_libraries(${example} PRIVATE blend_static)
+    else()
+      target_link_libraries(${example} PRIVATE blend_shared)
+    endif()
+  endforeach()
+endif()
+
 install(
   TARGETS ${BLEND_EXPORT_TARGETS}
   EXPORT blend-targets
@@ -131,6 +143,16 @@ install(
 install(
   FILES ChangeLog LICENSE.TXT COPYING COPYING.LESSER
   DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/blend
+)
+
+install(
+  DIRECTORY doc/examples
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/blend
+  FILES_MATCHING
+    PATTERN "*.c"
+    PATTERN "*.md"
+    PATTERN "*.gp"
+    PATTERN "*.png"
 )
 
 install(

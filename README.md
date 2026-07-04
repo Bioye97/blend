@@ -3,11 +3,7 @@
 ## Summary
 
 Library for localizing functions using arbitrarily-shaped support on the regular Cartesian grid.
-Applications include complex filter designs and merging of multidimensional datasets.
-
-![Blending weights from a cosine taper function defined on the support of an isotoxal star](doc/star.png)
-
-Figure: Volume rendering of a 3D cosine taper with an isotoxal star support that is invariant in the z-axis.
+Applications include filter design and synthesizing (or merging) multidimensional datasets (e.g., Ajala & Persaud, 2021, 2022).
 
 ## Building and installation
 
@@ -43,6 +39,12 @@ set (CMAKE_INSTALL_PREFIX "/usr/local/opt/blend")
 
 See the comments in `cmake/ConfigUserTemplate.cmake` for additional settings,
 including install directories, static/shared library selection, and tests.
+
+To build examples, enable examples in `cmake/ConfigUser.cmake`:
+
+```cmake
+set (BLEND_BUILD_EXAMPLES ON)
+```
 
 To build and run tests during installation, enable tests in
 `cmake/ConfigUser.cmake`:
@@ -163,6 +165,69 @@ Then rebuild and run tests from the build directory:
 cmake --build .
 ctest
 ```
+
+### Examples
+
+Examples are in `doc/examples`. Each example has its own directory, following
+the `ex01`, `ex02`, ... naming style. See `doc/examples/README.md` for
+instructions that apply to all examples.
+
+To build examples, set this in `cmake/ConfigUser.cmake`:
+
+```cmake
+set (BLEND_BUILD_EXAMPLES ON)
+```
+
+Then rebuild:
+
+```sh
+cmake --build .
+```
+
+Current examples:
+
+- `doc/examples/ex01`: writes a symmetric cosine taper window of length
+  `n = 100` to `ex01.txt`.
+- `doc/examples/ex02`: writes a symmetric trapezoid taper window of length
+  `n = 100` to `ex02.txt`.
+- `doc/examples/ex03`: writes a 2D cosine taper over a triangular support on
+  a 100 by 100 grid to `ex03.txt`.
+- `doc/examples/ex04`: writes a 2D cosine taper over a square support on a
+  100 by 100 grid to `ex04.txt`.
+- `doc/examples/ex05`: writes a 2D cosine taper over a pentagon support on a
+  100 by 100 grid to `ex05.txt`.
+- `doc/examples/ex06`: writes a 2D cosine taper over a hexagon support on a
+  100 by 100 grid to `ex06.txt`.
+- `doc/examples/ex07`: writes a 2D cosine taper over a heptagon support on a
+  100 by 100 grid to `ex07.txt`.
+- `doc/examples/ex08`: writes a 2D cosine taper over an octagon support on a
+  100 by 100 grid to `ex08.txt`.
+- `doc/examples/ex09`: writes a 2D cosine taper over a nonagon support on a
+  100 by 100 grid to `ex09.txt`.
+- `doc/examples/ex10`: writes a 2D cosine taper over a decagon support on a
+  100 by 100 grid to `ex10.txt`.
+- `doc/examples/ex11`: writes a 2D cosine taper over a 4-pointed
+  isotoxal-star support on a 100 by 100 grid to `ex11.txt`.
+- `doc/examples/ex12`: writes a 3D cosine taper over the same 4-pointed
+  isotoxal-star support as ex11 on a 100 by 100 by 25 grid to `ex12.txt`.
+
+Example output gallery:
+
+| ex01 | ex02 | ex03 |
+| --- | --- | --- |
+| ![ex01 cosine taper](doc/examples/ex01/ex01.png) | ![ex02 trapezoid taper](doc/examples/ex02/ex02.png) | ![ex03 triangle cosine taper](doc/examples/ex03/ex03.png) |
+
+| ex04 | ex05 | ex06 |
+| --- | --- | --- |
+| ![ex04 square cosine taper](doc/examples/ex04/ex04.png) | ![ex05 pentagon cosine taper](doc/examples/ex05/ex05.png) | ![ex06 hexagon cosine taper](doc/examples/ex06/ex06.png) |
+
+| ex07 | ex08 | ex09 |
+| --- | --- | --- |
+| ![ex07 heptagon cosine taper](doc/examples/ex07/ex07.png) | ![ex08 octagon cosine taper](doc/examples/ex08/ex08.png) | ![ex09 nonagon cosine taper](doc/examples/ex09/ex09.png) |
+
+| ex10 | ex11 | ex12 |
+| --- | --- | --- |
+| ![ex10 decagon cosine taper](doc/examples/ex10/ex10.png) | ![ex11 isotoxal star cosine taper](doc/examples/ex11/ex11.png) | ![ex12 3D isotoxal star cosine taper](doc/examples/ex12/ex12.png) |
 
 ### Using an installed BLEND
 

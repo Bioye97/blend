@@ -21,3 +21,21 @@
 	* Added LGPLv3 and GPLv3 license texts as COPYING.LESSER and COPYING.
 	* Installed license files with the package documentation.
 	* Added share/tools/blend_uninstall.sh to remove installed BLEND files.
+	* Added doc/examples/ex01 with a cosine taper window example and
+	  gnuplot plotting script.
+	* Added doc/examples/ex02 with a trapezoid taper window example and
+	  gnuplot plotting script.
+	* Added doc/examples/README.md with instructions shared by all examples.
+	* Added doc/examples/ex03 with a 2D triangular cosine taper example and
+	  gnuplot plotting script.
+	* Added doc/examples/ex04 with a 2D square cosine taper example and
+	  gnuplot plotting script.
+	* Added doc/examples/ex05 through doc/examples/ex10 for 2D cosine taper
+	  examples over pentagon, hexagon, heptagon, octagon, nonagon, and
+	  decagon supports.
+	* Added doc/examples/ex11 with a 2D 4-pointed isotoxal-star cosine
+	  taper example and gnuplot plotting script.
+	* Added doc/examples/ex12 with a 3D cosine taper example using the same
+	  4-pointed isotoxal-star support as ex11.
+	* Added rendered example output images to README.md and installed
+	  example documentation.

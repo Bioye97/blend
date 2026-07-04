@@ -22,3 +22,6 @@
 
 # 5. Tests [OFF]:
 # set (BLEND_BUILD_TESTS ON)
+
+# 6. Examples [OFF]:
+# set (BLEND_BUILD_EXAMPLES ON)

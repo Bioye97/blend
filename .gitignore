@@ -4,25 +4,16 @@
 cmake/ConfigUser.cmake
 cmake/ConfigUserAdvanced.cmake
 
-# Build directories and generated build output
+# Build and local install directories
 build/
-cmake-build-*/
-blend-install/
-autom4te.cache/
-aclocal.m4
-configure
-INSTALL
-Makefile.in
-src/Makefile.in
-compile
-install-sh
-missing
 
 # Compiled objects and libraries
 *.o
 *.a
 *.so
 *.dylib
+*.dSYM/
 
-# Test binaries
-tests/blend_api_test
+# Example outputs
+doc/examples/ex*/ex[0-9][0-9]
+doc/examples/ex*/ex[0-9][0-9].txt
