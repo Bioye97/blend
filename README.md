@@ -2,8 +2,7 @@
 
 ## Summary
 
-Library for localizing functions using arbitrarily-shaped support on the regular Cartesian grid.
-Applications include filter design and synthesizing (or merging) multidimensional datasets (e.g., Ajala & Persaud, 2021, 2022).
+Library for localizing functions using arbitrarily shaped support on the regular Cartesian grid. Applications include filter design and the synthesis (or merging) of multidimensional datasets (e.g., Ajala & Persaud, [2021](https://scholar.google.com/scholar?q=Effect+of+merging+multiscale+models+on+seismic+wavefield+predictions+near+the+southern+San+Andreas+fault), [2022](https://scholar.google.com/scholar?q=Ground-motion+evaluation+of+hybrid+seismic+velocity+models), and Ajala et al. [2025](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales)).
 
 ## Building and installation
 
@@ -38,7 +37,8 @@ set (CMAKE_INSTALL_PREFIX "/usr/local/opt/blend")
 ```
 
 See the comments in `cmake/ConfigUserTemplate.cmake` for additional settings,
-including install directories, static/shared library selection, and tests.
+including install directories, static/shared library selection, tests, and
+examples.
 
 To build examples, enable examples in `cmake/ConfigUser.cmake`:
 
@@ -80,6 +80,14 @@ cmake --build .
 
 This builds the BLEND static library, shared library, and optional test
 executables when enabled in `cmake/ConfigUser.cmake`.
+
+### Running tests
+
+If `BLEND_BUILD_TESTS` is `ON` in `cmake/ConfigUser.cmake`, run tests from the build directory:
+
+```sh
+ctest
+```
 
 ### Installing
 
@@ -149,21 +157,6 @@ Preview removals first with:
 
 ```sh
 ./share/tools/blend_uninstall.sh --dry-run
-```
-
-### Running tests
-
-To build tests, set this in `cmake/ConfigUser.cmake`:
-
-```cmake
-set (BLEND_BUILD_TESTS ON)
-```
-
-Then rebuild and run tests from the build directory:
-
-```sh
-cmake --build .
-ctest
 ```
 
 ### Examples

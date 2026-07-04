@@ -936,7 +936,7 @@ int hanging_sweep(int j, double *vector, double **prev_array, int prev_row, doub
                         vector[index] = vector[index-1] + delta;
                     }
                 }
-                index--; // update index for next vertex condition
+                index--; /* update index for next vertex condition */
                 break;
 
 
@@ -1001,7 +1001,7 @@ int hanging_sweep(int j, double *vector, double **prev_array, int prev_row, doub
                         vector[index] = vector[index-1] + delta;
                     }
                 }
-                index--; // update index for next vertex condition
+                index--; /* update index for next vertex condition */
                 break;
         } /* end of switch block */
     } 
@@ -2210,4 +2210,3 @@ int embedding_contribution2d(int x, int y, window_t *data) {
 
     return SUCCESS;
 }
-
