@@ -15,6 +15,7 @@
 # set (BLEND_INSTALL_LIBDIR "lib")
 # set (BLEND_INSTALL_BINDIR "bin")
 # set (BLEND_INSTALL_CMAKEDIR "lib/cmake/blend")
+# set (BLEND_INSTALL_DOCDIR "doc")
 
 # 4. Library selection [both enabled]:
 # set (BLEND_BUILD_SHARED TRUE)

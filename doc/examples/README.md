@@ -82,13 +82,13 @@ From the repository root:
 
 ```sh
 EX=ex01
-cc doc/examples/${EX}/${EX}.c src/blend.c -I src -o doc/examples/${EX}/${EX} -lm
+cc ./doc/examples/${EX}/${EX}.c src/blend.c -I src -o ./doc/examples/${EX}/${EX} -lm
 ```
 
 Then run it:
 
 ```sh
-cd doc/examples/${EX}
+cd ./doc/examples/${EX}
 ./${EX}
 ```
 
@@ -105,11 +105,11 @@ Then compile from the repository root:
 
 ```sh
 EX=ex01
-cc doc/examples/${EX}/${EX}.c \
-  -I${BLEND_PREFIX}/include/blend \
-  -L${BLEND_PREFIX}/lib \
+cc ./doc/examples/${EX}/${EX}.c \
+  -I ${BLEND_PREFIX}/include/blend \
+  -L ${BLEND_PREFIX}/lib \
   -lblend \
-  -o doc/examples/${EX}/${EX}
+  -o ./doc/examples/${EX}/${EX}
 ```
 
 On macOS, if the dynamic loader cannot find `libblend.dylib`, set:

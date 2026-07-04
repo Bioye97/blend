@@ -44,6 +44,15 @@ remove_empty_dir()
 	fi
 }
 
+remove_empty_dir_tree()
+{
+	dir="$1"
+	while [ "${dir}" != "${prefix}" ] && [ "${dir}" != "." ] && [ "${dir}" != "/" ]; do
+		remove_empty_dir "${dir}"
+		dir="$(dirname "${dir}")"
+	done
+}
+
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		--prefix)
@@ -73,7 +82,7 @@ done
 libdir="${prefix}/@BLEND_INSTALL_LIBDIR@"
 includedir="${prefix}/@BLEND_INSTALL_INCLUDEDIR@"
 cmakedir="${prefix}/@BLEND_INSTALL_CMAKEDIR@"
-docdir="${prefix}/@CMAKE_INSTALL_DATADIR@/doc/blend"
+docdir="${prefix}/@BLEND_INSTALL_DOCDIR@"
 tooldir="${prefix}/@CMAKE_INSTALL_DATADIR@/tools"
 
 remove_path "${libdir}/libblend.a"
@@ -110,17 +119,16 @@ done
 
 remove_path "${tooldir}/blend_uninstall.sh"
 
-remove_empty_dir "${cmakedir}"
-remove_empty_dir "$(dirname "${cmakedir}")"
-remove_empty_dir "${includedir}"
-
 for example_dir in "${docdir}"/examples/ex[0-9][0-9]; do
 	remove_empty_dir "${example_dir}"
 done
 
-remove_empty_dir "${docdir}/examples"
-remove_empty_dir "${docdir}"
-remove_empty_dir "${tooldir}"
+remove_empty_dir_tree "${docdir}/examples"
+remove_empty_dir_tree "${docdir}"
+remove_empty_dir_tree "${includedir}"
+remove_empty_dir_tree "${cmakedir}"
+remove_empty_dir_tree "${libdir}"
+remove_empty_dir_tree "${tooldir}"
 
 if [ "${dry_run}" -eq 1 ]; then
 	printf 'Dry run complete.\n'

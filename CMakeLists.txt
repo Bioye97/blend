@@ -86,7 +86,7 @@ if(BLEND_BUILD_TESTS)
   else()
     target_link_libraries(blend_api_test PRIVATE blend_shared)
   endif()
-  add_test(NAME blend_api_test COMMAND blend_api_test)
+  add_test(NAME blend_api_test COMMAND $<TARGET_FILE:blend_api_test>)
 
 endif()
 
@@ -145,12 +145,12 @@ install(
 
 install(
   FILES ChangeLog LICENSE.TXT COPYING COPYING.LESSER
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/blend
+  DESTINATION ${BLEND_INSTALL_DOCDIR}
 )
 
 install(
   DIRECTORY doc/examples
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/blend
+  DESTINATION ${BLEND_INSTALL_DOCDIR}
   FILES_MATCHING
     PATTERN "*.c"
     PATTERN "*.md"

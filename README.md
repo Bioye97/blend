@@ -83,11 +83,15 @@ executables when enabled in `cmake/ConfigUser.cmake`.
 
 ### Running tests
 
-If `BLEND_BUILD_TESTS` is `ON` in `cmake/ConfigUser.cmake`, run tests from the build directory:
+If `BLEND_BUILD_TESTS` is `ON` in `cmake/ConfigUser.cmake`, run tests from the
+build directory after `cmake --build .` has completed:
 
 ```sh
 ctest
 ```
+
+If `BLEND_BUILD_TESTS` was turned on after the build directory already existed,
+rerun `cmake ..` and `cmake --build .` before running `ctest`.
 
 ### Installing
 
