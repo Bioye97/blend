@@ -854,6 +854,11 @@ static int window3d_parse_blendfile_line(const char *line, long line_number,
         blend_polygon_free(&input_polygon);
         return FAIL;
     }
+    if (!is_xy_monotone) {
+        BLEND_Report(BLEND_MSG_WARNING,
+                     "%s: original number of vertices = %zu, final number of vertices = %zu.\n",
+                     polygon_file, input_polygon.n_vertices, support_polygon.n_vertices);
+    }
 
     status = window3d_build_support(options, polygon_file, support_polygon.vertices,
                                     support_polygon.n_vertices, zlo, zhi,

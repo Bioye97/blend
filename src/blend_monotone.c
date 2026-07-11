@@ -377,6 +377,10 @@ int blend_monotone_module(int argc, char **argv)
             blend_polygon_free(&input);
             return FAIL;
         }
+        BLEND_Report(BLEND_MSG_WARNING,
+                     "%s: original number of vertices = %zu, final number of vertices = %zu.\n",
+                     options.polygonfile != NULL ? options.polygonfile : "standard input",
+                     input.n_vertices, output.n_vertices);
     }
     else {
         BLEND_Report(BLEND_MSG_ERROR, "monotone: unknown monotone method: %c\n", options.monotone_method);

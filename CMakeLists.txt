@@ -43,7 +43,14 @@ set(BLEND_EXPORT_TARGETS)
 set(
   BLEND_PUBLIC_HEADERS
   src/blend.h
+  src/blend_api.h
+  src/blend_boundary.h
+  src/blend_contribution.h
+  src/blend_error.h
   src/blend_polygon.h
+  src/blend_report.h
+  src/blend_utils.h
+  src/blend_window.h
   "${CMAKE_CURRENT_BINARY_DIR}/src/blend_version.h"
 )
 set(
@@ -141,6 +148,14 @@ if(BLEND_BUILD_TESTS)
     target_link_libraries(blend_api_test PRIVATE blend_shared)
   endif()
   add_test(NAME blend_api_test COMMAND $<TARGET_FILE:blend_api_test>)
+  add_executable(blend_header_test tests/blend_header_test.c)
+  target_include_directories(
+    blend_header_test
+    PRIVATE
+      "${CMAKE_CURRENT_BINARY_DIR}/src"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src"
+  )
+  add_test(NAME blend_header_test COMMAND $<TARGET_FILE:blend_header_test>)
   add_test(NAME blend_cli_usage COMMAND blend)
   add_test(NAME blend_cli_help COMMAND blend --help)
   add_test(NAME blend_cli_show_modules COMMAND blend --show-modules)
@@ -188,11 +203,11 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_monotone_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone -Me $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using envelope method' $tmp/err && awk 'END {if (NR != 4) exit 1} ($1==0 && $2==0){a=1} ($1==3 && $2==0){b=1} ($1==3 && $2==3){c=1} ($1==0 && $2==3){d=1} END {exit !(a && b && c && d)}' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone -Me $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using envelope method' $tmp/err && grep -q 'original number of vertices = 8, final number of vertices = 4' $tmp/err && awk 'END {if (NR != 4) exit 1} ($1==0 && $2==0){a=1} ($1==3 && $2==0){b=1} ($1==3 && $2==3){c=1} ($1==0 && $2==3){d=1} END {exit !(a && b && c && d)}' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_monotone_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; awk '{line[NR]=$0} END{for(i=NR;i>0;i--) print line[i]}' $tmp/poly.txt > $tmp/rev.txt; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/rev.txt > $tmp/rev_out 2> $tmp/rev_err; rev_status=$?; grep -q 'using best IoU piecewise envelope method' $tmp/err && grep -q 'using best IoU piecewise envelope method' $tmp/rev_err && cmp -s $tmp/out $tmp/rev_out && $<TARGET_FILE:blend> monotone $tmp/out | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && test $rev_status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; awk '{line[NR]=$0} END{for(i=NR;i>0;i--) print line[i]}' $tmp/poly.txt > $tmp/rev.txt; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/rev.txt > $tmp/rev_out 2> $tmp/rev_err; rev_status=$?; grep -q 'using best IoU piecewise envelope method' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q 'using best IoU piecewise envelope method' $tmp/rev_err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/rev_err && cmp -s $tmp/out $tmp/rev_out && $<TARGET_FILE:blend> monotone $tmp/out | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && test $rev_status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_monotone_envelope_already_monotone
@@ -336,11 +351,11 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window2d_blendfile_monotone_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; using its xy-monotone envelope from -Me' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; using its xy-monotone envelope from -Me' $tmp/err && grep -q 'original number of vertices = 8, final number of vertices = 4' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window2d_blendfile_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5\\n' | $<TARGET_FILE:blend> window2d -R-1/5/0/5 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q '4.5 0.5 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5\\n' | $<TARGET_FILE:blend> window2d -R-1/5/0/5 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q '4.5 0.5 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window2d_blendfile_reject_nonmonotone
@@ -390,7 +405,7 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window3d_blendfile_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window3d_blendfile_reject_nonmonotone
