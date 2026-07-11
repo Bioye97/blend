@@ -14,7 +14,6 @@ typedef struct blend_module {
 } blend_module;
 
 int blend_docs_module(int argc, char **argv);
-int blend_simplify_module(int argc, char **argv);
 int blend_monotone_module(int argc, char **argv);
 int blend_window1d_module(int argc, char **argv);
 int blend_window2d_module(int argc, char **argv);

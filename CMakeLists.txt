@@ -62,7 +62,6 @@ set(
   src/blend_docs.c
   src/blend_module.c
   src/blend_monotone.c
-  src/blend_simplify.c
   src/blend_window1d.c
   src/blend_window2d.c
   src/blend_window3d.c
@@ -332,7 +331,7 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window2d_blendfile_reject_nonmonotone
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; use -Me' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'check -M if you want BLEND to refine it with -Me or -Mb' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
   )
   add_test(
     NAME blend_window2d_blendfile_ignores_function_taper
@@ -344,6 +343,51 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(NAME blend_window2d_bad_ratio COMMAND blend window2d -R0/2/0/2 -I1 --taper_ratio=0.5/0/0/0)
   set_tests_properties(blend_window2d_bad_ratio PROPERTIES WILL_FAIL TRUE)
+
+  add_test(
+    NAME blend_window3d_usage_no_error
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window3d > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend window3d - Generate 3-D blending weights' $tmp/out && grep -q '^usage: blend window3d' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window3d_boxcar_grid
+    COMMAND bash -c "$<TARGET_FILE:blend> window3d -R0/2/0/2/0/2 -I1 -Fboxcar/boxcar/boxcar -T0/0/0/0/0/0 2> /dev/null | awk 'NR != 27 {next} {print} END {if (NR != 27) exit 1}'"
+  )
+  set_tests_properties(
+    blend_window3d_boxcar_grid
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "2 2 2 1.000000000000"
+  )
+  add_test(
+    NAME blend_window3d_query
+    COMMAND bash -c "printf '1.5 1.5 1.5\\n3 3 3\\n' | $<TARGET_FILE:blend> window3d -R0/2/0/2/0/2 -I1 -Fboxcar/boxcar/boxcar"
+  )
+  set_tests_properties(
+    blend_window3d_query
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "1.5 1.5 1.5 1.000000000000[\r\n]+3 3 3 0.000000000000"
+  )
+  add_test(
+    NAME blend_window3d_blendfile_query
+    COMMAND bash -c "tmp=$(mktemp -d); printf '1 1\\n3 1\\n3 3\\n1 3\\n' > $tmp/poly.txt; printf '%s 1 3 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '2.5 2.5 2.5\\n2.5 2.5 0.5\\n0.5 0.5 2.5\\n' | $<TARGET_FILE:blend> window3d -R0/4/0/4/0/4 -I1 -B$tmp/blend.txt; status=$?; rm -rf $tmp; exit $status"
+  )
+  set_tests_properties(
+    blend_window3d_blendfile_query
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "2.5 2.5 2.5 1.000000000000[\r\n]+2.5 2.5 0.5 0.000000000000[\r\n]+0.5 0.5 2.5 0.000000000000"
+  )
+  add_test(
+    NAME blend_window3d_blendfile_best_piecewise_envelope
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window3d_blendfile_reject_nonmonotone
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5 1\\n' | $<TARGET_FILE:blend> window3d -R0/3/0/3/0/2 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'check -M if you want BLEND to refine it with -Me or -Mb' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
+  )
+  add_test(
+    NAME blend_window3d_bad_ratio
+    COMMAND blend window3d -R0/2/0/2/0/2 -I1 --taper_ratio=0.5/0/0/0/0/0
+  )
+  set_tests_properties(blend_window3d_bad_ratio PROPERTIES WILL_FAIL TRUE)
 
 endif()
 

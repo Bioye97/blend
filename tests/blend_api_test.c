@@ -730,6 +730,35 @@ static int test_linear_interpolation(void)
                                        0.0, 1.0, 2.0, 3.0,
                                        0.5, 0.5, NULL), FAIL);
 
+    ASSERT_EQ_INT(interpolate_trilinear(0.0, 10.0, 0.0, 20.0, 0.0, 30.0,
+                                        0.0, 10.0, 20.0, 30.0,
+                                        30.0, 40.0, 50.0, 60.0,
+                                        2.5, 5.0, 7.5, &value), SUCCESS);
+    ASSERT_NEAR(value, 15.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(interpolate_trilinear(10.0, 0.0, 20.0, 0.0, 30.0, 0.0,
+                                        60.0, 50.0, 40.0, 30.0,
+                                        30.0, 20.0, 10.0, 0.0,
+                                        2.5, 5.0, 7.5, &value), SUCCESS);
+    ASSERT_NEAR(value, 15.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(interpolate_trilinear(1.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+                                        0.0, 1.0, 2.0, 3.0,
+                                        4.0, 5.0, 6.0, 7.0,
+                                        1.0, 0.5, 0.5, &value), FAIL);
+    ASSERT_EQ_INT(interpolate_trilinear(0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+                                        0.0, 1.0, 2.0, 3.0,
+                                        4.0, 5.0, 6.0, 7.0,
+                                        0.5, 1.0, 0.5, &value), FAIL);
+    ASSERT_EQ_INT(interpolate_trilinear(0.0, 1.0, 0.0, 1.0, 1.0, 1.0,
+                                        0.0, 1.0, 2.0, 3.0,
+                                        4.0, 5.0, 6.0, 7.0,
+                                        0.5, 0.5, 1.0, &value), FAIL);
+    ASSERT_EQ_INT(interpolate_trilinear(0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+                                        0.0, 1.0, 2.0, 3.0,
+                                        4.0, 5.0, 6.0, 7.0,
+                                        0.5, 0.5, 0.5, NULL), FAIL);
+
     return SUCCESS;
 }
 

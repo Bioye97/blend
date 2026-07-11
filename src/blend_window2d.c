@@ -763,7 +763,7 @@ static int window2d_parse_blendfile_line(const char *line, long line_number,
     if (!is_xy_monotone) {
         if (options->monotone_method != 'e' && options->monotone_method != 'b') {
             BLEND_Report(BLEND_MSG_ERROR,
-                         "window2d: polygon %s is not xy-monotone; use -Me or -Mb to convert it\n",
+                         "window2d: polygon %s is not xy-monotone; check -M if you want BLEND to refine it with -Me or -Mb\n",
                          polygon_file);
             blend_polygon_free(&input_polygon);
             return FAIL;

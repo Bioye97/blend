@@ -11,7 +11,6 @@
 
 static const blend_module modules[] = {
     {"docs", "Show documentation for a BLEND module", blend_docs_module},
-    {"simplify", "Simplify polygon vertices", blend_simplify_module},
     {"monotone", "Check or enforce xy-monotone polygon boundaries", blend_monotone_module},
     {"window1d", "Generate 1D window weights", blend_window1d_module},
     {"window2d", "Generate 2D window weights", blend_window2d_module},
