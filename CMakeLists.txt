@@ -31,6 +31,7 @@ option(BLEND_BUILD_TESTS "Build BLEND test executables" ${BLEND_BUILD_TESTS})
 option(BLEND_BUILD_SHARED "Build the BLEND shared library" ${BLEND_BUILD_SHARED})
 option(BLEND_BUILD_STATIC "Build the BLEND static library" ${BLEND_BUILD_STATIC})
 option(BLEND_BUILD_EXAMPLES "Build BLEND example executables" ${BLEND_BUILD_EXAMPLES})
+option(BLEND_BUILD_DOCS "Build BLEND documentation targets" ${BLEND_BUILD_DOCS})
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/src")
 configure_file(
@@ -430,6 +431,58 @@ if(BLEND_BUILD_EXAMPLES)
   endforeach()
 endif()
 
+set(BLEND_DOC_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/html")
+set(BLEND_DOC_LATEX_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/latex")
+set(BLEND_DOC_PDF "${BLEND_DOC_HTML_DIR}/_downloads/blend.pdf")
+
+if(BLEND_BUILD_DOCS)
+  find_program(SPHINX_BUILD_EXECUTABLE NAMES sphinx-build)
+  find_program(LATEXMK_EXECUTABLE NAMES latexmk)
+
+  if(SPHINX_BUILD_EXECUTABLE)
+    add_custom_target(
+      docs_html
+      COMMAND "${SPHINX_BUILD_EXECUTABLE}"
+              -b html
+              -D version=${PROJECT_VERSION}
+              -D release=${PROJECT_VERSION}
+              "${CMAKE_CURRENT_SOURCE_DIR}/doc/rst/source"
+              "${BLEND_DOC_HTML_DIR}"
+      COMMENT "Building BLEND HTML documentation"
+      VERBATIM
+    )
+  else()
+    message(WARNING "sphinx-build was not found; documentation targets will not be available.")
+  endif()
+
+  if(SPHINX_BUILD_EXECUTABLE AND LATEXMK_EXECUTABLE)
+    add_custom_target(
+      docs_pdf
+      COMMAND "${SPHINX_BUILD_EXECUTABLE}"
+              -b latex
+              -D version=${PROJECT_VERSION}
+              -D release=${PROJECT_VERSION}
+              "${CMAKE_CURRENT_SOURCE_DIR}/doc/rst/source"
+              "${BLEND_DOC_LATEX_DIR}"
+      COMMAND "${CMAKE_COMMAND}" -E chdir "${BLEND_DOC_LATEX_DIR}"
+              "${LATEXMK_EXECUTABLE}" -pdf -interaction=nonstopmode -halt-on-error blend.tex
+      COMMAND "${CMAKE_COMMAND}" -E make_directory "${BLEND_DOC_HTML_DIR}/_downloads"
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${BLEND_DOC_LATEX_DIR}/blend.pdf" "${BLEND_DOC_PDF}"
+      COMMENT "Building BLEND PDF documentation"
+      VERBATIM
+    )
+    add_dependencies(docs_pdf docs_html)
+  elseif(SPHINX_BUILD_EXECUTABLE)
+    message(WARNING "latexmk was not found; docs_pdf target will not be available.")
+  endif()
+
+  if(TARGET docs_html AND TARGET docs_pdf)
+    add_custom_target(docs DEPENDS docs_html docs_pdf)
+  elseif(TARGET docs_html)
+    add_custom_target(docs DEPENDS docs_html)
+  endif()
+endif()
+
 install(
   TARGETS ${BLEND_EXPORT_TARGETS}
   EXPORT blend-targets
@@ -490,6 +543,17 @@ install(
     PATTERN "*.md"
     PATTERN "*.gp"
     PATTERN "*.png"
+)
+
+install(
+  DIRECTORY doc/rst
+  DESTINATION ${BLEND_INSTALL_DOCDIR}
+)
+
+install(
+  DIRECTORY "${BLEND_DOC_HTML_DIR}/"
+  DESTINATION "${BLEND_INSTALL_DOCDIR}/html"
+  OPTIONAL
 )
 
 install(

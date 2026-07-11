@@ -4,6 +4,8 @@
 
 Library for localizing functions using arbitrarily shaped support on the regular Cartesian grid. Applications include filter design and the synthesis (or merging) of multidimensional datasets (e.g., Ajala & Persaud, [2021](https://scholar.google.com/scholar?q=Effect+of+merging+multiscale+models+on+seismic+wavefield+predictions+near+the+southern+San+Andreas+fault), [2022](https://scholar.google.com/scholar?q=Ground-motion+evaluation+of+hybrid+seismic+velocity+models), and Ajala et al. [2025](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales)).
 
+Full documentation: [https://bioye97.github.io/blend/](https://bioye97.github.io/blend/)
+
 ## Building and installation
 
 ### Build dependencies
@@ -13,6 +15,12 @@ To build BLEND, install:
 - CMake 3.15 or newer
 - A C compiler
 - Ninja, optional but recommended for faster builds
+
+To build the documentation, also install:
+
+- Sphinx, which provides `sphinx-build`, for HTML documentation
+- The Read the Docs Sphinx theme, provided by `sphinx-rtd-theme`
+- LaTeX and `latexmk`, for PDF documentation
 
 ### Configuring
 
@@ -45,6 +53,59 @@ To build examples, enable examples in `cmake/ConfigUser.cmake`:
 ```cmake
 set (BLEND_BUILD_EXAMPLES ON)
 ```
+
+To build the documentation, enable documentation targets in
+`cmake/ConfigUser.cmake`:
+
+```cmake
+set (BLEND_BUILD_DOCS ON)
+```
+
+When documentation is enabled, CMake looks for `sphinx-build` during
+configuration. If Sphinx is installed but `sphinx-build` is not in your shell
+search path, either add its directory to `PATH` before running CMake:
+
+```sh
+export PATH="/path/to/sphinx/bin:$PATH"
+cmake ..
+```
+
+or pass the executable location to CMake:
+
+```sh
+cmake .. -DSPHINX_BUILD_EXECUTABLE=/path/to/sphinx-build
+```
+
+BLEND uses the Read the Docs theme for its HTML documentation. Install the
+theme in the same Python environment that provides `sphinx-build`, for example:
+
+```sh
+python -m pip install sphinx-rtd-theme
+```
+
+or, with conda:
+
+```sh
+conda install -c conda-forge sphinx_rtd_theme
+```
+
+If you use a conda environment or another Python environment for the
+documentation tools, activate that environment before configuring BLEND:
+
+```sh
+conda activate my-docs-env
+cmake ..
+```
+
+Alternatively, leave your shell environment unchanged and point CMake directly
+to the `sphinx-build` executable from that environment:
+
+```sh
+cmake .. -DSPHINX_BUILD_EXECUTABLE=/path/to/conda/env/bin/sphinx-build
+```
+
+The important point is that `sphinx-build` and `sphinx-rtd-theme` must come
+from the same Python environment.
 
 To build and run tests during installation, enable tests in
 `cmake/ConfigUser.cmake`:
@@ -92,6 +153,38 @@ ctest
 
 If `BLEND_BUILD_TESTS` was turned on after the build directory already existed,
 rerun `cmake ..` and `cmake --build .` before running `ctest`.
+
+### Building documentation
+
+If `BLEND_BUILD_DOCS` is `ON` in `cmake/ConfigUser.cmake`, build the
+documentation from the build directory.
+
+To build both the HTML documentation and the PDF manual:
+
+```sh
+cmake --build . --target docs
+```
+
+To build only the HTML documentation:
+
+```sh
+cmake --build . --target docs_html
+```
+
+To build only the PDF manual:
+
+```sh
+cmake --build . --target docs_pdf
+```
+
+The HTML documentation is written to `doc/html` inside the build directory.
+Open `doc/html/index.html` in a browser to view it. The PDF manual is copied
+into the HTML tree as `_downloads/blend.pdf`, and the front page includes a
+download link.
+
+If `BLEND_BUILD_DOCS` was turned on after the build directory already existed,
+rerun `cmake ..` before building the documentation targets. The `docs_pdf`
+target is available only when `latexmk` is found during configuration.
 
 ### Installing
 

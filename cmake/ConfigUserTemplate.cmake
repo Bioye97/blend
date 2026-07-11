@@ -26,3 +26,6 @@
 
 # 6. Examples [OFF]:
 # set (BLEND_BUILD_EXAMPLES ON)
+
+# 7. Build Sphinx HTML and PDF documentation targets [OFF]:
+# set (BLEND_BUILD_DOCS ON)
