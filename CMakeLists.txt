@@ -148,9 +148,22 @@ if(BLEND_BUILD_TESTS)
   set_tests_properties(
     blend_cli_show_windows
     PROPERTIES
-      PASS_REGULAR_EXPRESSION "boxcar[\r\n]+cosine[\r\n]+trapezoid"
+      PASS_REGULAR_EXPRESSION "boxcar[\r\n]+cosine[\r\n]+hann[\r\n]+tukey[\r\n]+trapezoid[\r\n]+linear[\r\n]+hamming[\r\n]+blackman[\r\n]+blackmanharris[\r\n]+welch[\r\n]+parzen[\r\n]+gaussian[\r\n]+smoothstep[\r\n]+smootherstep[\r\n]+exponential[\r\n]+sine[\r\n]+bohman[\r\n]+nuttall[\r\n]+kaiser[\r\n]+cauchy[\r\n]+quadratic[\r\n]+cubic[\r\n]+poisson[\r\n]+bartlett[\r\n]+barthann[\r\n]+bartletthann[\r\n]+exactblackman[\r\n]+blackmannuttall[\r\n]+flattop[\r\n]+lanczos[\r\n]+riesz[\r\n]+riemann[\r\n]+fejer[\r\n]+connes[\r\n]+hanningpoisson[\r\n]+kaiserbessel[\r\n]+plancktaper[\r\n]+quartic[\r\n]+quintic[\r\n]+septic[\r\n]+nonic[\r\n]+logistic[\r\n]+tanh[\r\n]+erf[\r\n]+arctan[\r\n]+gompertz[\r\n]+softsign[\r\n]+agnesi[\r\n]+inversequadratic[\r\n]+inversemultiquadric[\r\n]+powerlaw[\r\n]+root[\r\n]+circular[\r\n]+sech[\r\n]+sech2[\r\n]+student[\r\n]+laplace"
   )
   add_test(NAME blend_cli_module_exists COMMAND blend docs =)
+  add_test(
+    NAME blend_docs_usage_no_error
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> docs > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend docs - Show documentation for a BLEND module' $tmp/out && grep -q '^usage: blend docs' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && ! grep -q '^BLEND modules:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_docs_module_lookup
+    COMMAND blend docs window2d
+  )
+  set_tests_properties(
+    blend_docs_module_lookup
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "window2d - Generate 2D window weights"
+  )
   add_test(
     NAME blend_monotone_usage_no_error
     COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> monotone --help > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend monotone - Check or enforce xy-monotone polygon boundaries' $tmp/out && grep -q '^usage: blend monotone' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"

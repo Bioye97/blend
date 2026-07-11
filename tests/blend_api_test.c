@@ -489,6 +489,105 @@ static int test_polygon_api_functions(void)
 static int test_window_functions(void)
 {
     blend_window_function parsed = WFUNC_INVALID;
+    blend_window_function functions[] = {
+        WFUNC_BOXCAR,
+        WFUNC_COSINE,
+        WFUNC_TRAPEZOID,
+        WFUNC_HAMMING,
+        WFUNC_BLACKMAN,
+        WFUNC_BLACKMANHARRIS,
+        WFUNC_WELCH,
+        WFUNC_PARZEN,
+        WFUNC_GAUSSIAN,
+        WFUNC_SMOOTHSTEP,
+        WFUNC_SMOOTHERSTEP,
+        WFUNC_EXPONENTIAL,
+        WFUNC_SINE,
+        WFUNC_BOHMAN,
+        WFUNC_NUTTALL,
+        WFUNC_KAISER,
+        WFUNC_CAUCHY,
+        WFUNC_QUADRATIC,
+        WFUNC_CUBIC,
+        WFUNC_POISSON,
+        WFUNC_BARTLETT,
+        WFUNC_BARTLETTHANN,
+        WFUNC_EXACTBLACKMAN,
+        WFUNC_BLACKMANNUTTALL,
+        WFUNC_FLATTOP,
+        WFUNC_LANCZOS,
+        WFUNC_RIESZ,
+        WFUNC_RIEMANN,
+        WFUNC_FEJER,
+        WFUNC_CONNES,
+        WFUNC_HANNINGPOISSON,
+        WFUNC_KAISERBESSEL,
+        WFUNC_PLANCKTAPER,
+        WFUNC_QUARTIC,
+        WFUNC_QUINTIC,
+        WFUNC_SEPTIC,
+        WFUNC_NONIC,
+        WFUNC_LOGISTIC,
+        WFUNC_TANH,
+        WFUNC_ERF,
+        WFUNC_ARCTAN,
+        WFUNC_GOMPERTZ,
+        WFUNC_SOFTSIGN,
+        WFUNC_AGNESI,
+        WFUNC_INVERSEQUADRATIC,
+        WFUNC_INVERSEMULTIQUADRIC,
+        WFUNC_POWERLAW,
+        WFUNC_ROOT,
+        WFUNC_CIRCULAR,
+        WFUNC_SECH,
+        WFUNC_SECH2,
+        WFUNC_STUDENT,
+        WFUNC_LAPLACE
+    };
+    struct {
+        const char *name;
+        blend_window_function function;
+    } parse_cases[] = {
+        {"bartlett", WFUNC_BARTLETT},
+        {"barthann", WFUNC_BARTLETTHANN},
+        {"bartletthann", WFUNC_BARTLETTHANN},
+        {"exactblackman", WFUNC_EXACTBLACKMAN},
+        {"blackmannuttall", WFUNC_BLACKMANNUTTALL},
+        {"flattop", WFUNC_FLATTOP},
+        {"lanczos", WFUNC_LANCZOS},
+        {"riesz", WFUNC_RIESZ},
+        {"riemann", WFUNC_RIEMANN},
+        {"fejer", WFUNC_FEJER},
+        {"connes", WFUNC_CONNES},
+        {"hanningpoisson", WFUNC_HANNINGPOISSON},
+        {"hannpoisson", WFUNC_HANNINGPOISSON},
+        {"kaiserbessel", WFUNC_KAISERBESSEL},
+        {"plancktaper", WFUNC_PLANCKTAPER},
+        {"planck", WFUNC_PLANCKTAPER},
+        {"quartic", WFUNC_QUARTIC},
+        {"quintic", WFUNC_QUINTIC},
+        {"septic", WFUNC_SEPTIC},
+        {"nonic", WFUNC_NONIC},
+        {"logistic", WFUNC_LOGISTIC},
+        {"tanh", WFUNC_TANH},
+        {"erf", WFUNC_ERF},
+        {"arctan", WFUNC_ARCTAN},
+        {"gompertz", WFUNC_GOMPERTZ},
+        {"softsign", WFUNC_SOFTSIGN},
+        {"agnesi", WFUNC_AGNESI},
+        {"inversequadratic", WFUNC_INVERSEQUADRATIC},
+        {"inversemultiquadric", WFUNC_INVERSEMULTIQUADRIC},
+        {"powerlaw", WFUNC_POWERLAW},
+        {"root", WFUNC_ROOT},
+        {"circular", WFUNC_CIRCULAR},
+        {"sech", WFUNC_SECH},
+        {"sech2", WFUNC_SECH2},
+        {"student", WFUNC_STUDENT},
+        {"laplace", WFUNC_LAPLACE},
+        {"normal", WFUNC_GAUSSIAN}
+    };
+    size_t f;
+    size_t p;
     int i;
 
     ASSERT_NEAR(boxcar(), 1.0, DBL_EPSILON);
@@ -499,16 +598,105 @@ static int test_window_functions(void)
     ASSERT_NEAR(trapezoid(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
     ASSERT_NEAR(trapezoid(9, 10, 10, 10, 0.1, 0.2), 0.75, DBL_EPSILON);
     ASSERT_NEAR(trapezoid(33, 41, 41, 41, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(hamming(1, 10, 10, 10, 0.2, 0.2), 0.214730880654, 1e-12);
+    ASSERT_NEAR(blackman(1, 10, 10, 10, 0.2, 0.2), 0.066446609407, 1e-12);
+    ASSERT_NEAR(blackmanharris(1, 10, 10, 10, 0.2, 0.2), 0.021735837019, 1e-12);
+    ASSERT_NEAR(welch(1, 10, 10, 10, 0.2, 0.2), 0.4375, DBL_EPSILON);
+    ASSERT_NEAR(parzen(1, 10, 10, 10, 0.2, 0.2), 0.03125, DBL_EPSILON);
+    ASSERT_NEAR(gaussian(1, 10, 10, 10, 0.2, 0.2), 0.069219471044, 1e-12);
+    ASSERT_NEAR(smoothstep(1, 10, 10, 10, 0.2, 0.2), 0.15625, DBL_EPSILON);
+    ASSERT_NEAR(smootherstep(1, 10, 10, 10, 0.2, 0.2), 0.103515625, DBL_EPSILON);
+    ASSERT_NEAR(exponential(1, 10, 10, 10, 0.2, 0.2), 0.718335308375, 1e-12);
+    ASSERT_NEAR(sine(1, 10, 10, 10, 0.2, 0.2), sin(0.125 * M_PI), 1e-12);
+    ASSERT_NEAR(bohman(1, 10, 10, 10, 0.2, 0.2),
+                0.25 * cos(0.75 * M_PI) + sin(0.75 * M_PI) / M_PI, 1e-12);
+    ASSERT_TRUE(nuttall(1, 10, 10, 10, 0.2, 0.2) > 0.0);
+    ASSERT_TRUE(nuttall(1, 10, 10, 10, 0.2, 0.2) < 1.0);
+    ASSERT_TRUE(kaiser(1, 10, 10, 10, 0.2, 0.2) > 0.0);
+    ASSERT_TRUE(kaiser(1, 10, 10, 10, 0.2, 0.2) < 1.0);
+    ASSERT_TRUE(cauchy(1, 10, 10, 10, 0.2, 0.2) > 0.0);
+    ASSERT_TRUE(cauchy(1, 10, 10, 10, 0.2, 0.2) < 1.0);
+    ASSERT_NEAR(quadratic(1, 10, 10, 10, 0.2, 0.2), 0.0625, DBL_EPSILON);
+    ASSERT_NEAR(cubic(1, 10, 10, 10, 0.2, 0.2), 0.015625, DBL_EPSILON);
+    ASSERT_NEAR(poisson(1, 10, 10, 10, 0.2, 0.2),
+                (exp(-3.75) - exp(-5.0)) / (1.0 - exp(-5.0)), 1e-12);
+    ASSERT_NEAR(bartlett(1, 10, 10, 10, 0.2, 0.2), 0.25, DBL_EPSILON);
+    ASSERT_NEAR(fejer(1, 10, 10, 10, 0.2, 0.2), 0.25, DBL_EPSILON);
+    ASSERT_NEAR(quartic(1, 10, 10, 10, 0.2, 0.2), 0.00390625, DBL_EPSILON);
+    ASSERT_NEAR(quintic(1, 10, 10, 10, 0.2, 0.2), 0.0009765625, DBL_EPSILON);
+    ASSERT_NEAR(plancktaper(1, 10, 10, 10, 0.2, 0.2),
+                1.0 / (exp((1.0 / 0.25) - (1.0 / 0.75)) + 1.0), 1e-12);
+    ASSERT_TRUE(flattop(1, 10, 10, 10, 0.2, 0.2) >= 0.0);
+    ASSERT_TRUE(flattop(1, 10, 10, 10, 0.2, 0.2) <= 1.0);
+    ASSERT_TRUE(logistic(1, 10, 10, 10, 0.2, 0.2) > 0.0);
+    ASSERT_TRUE(logistic(1, 10, 10, 10, 0.2, 0.2) < 1.0);
+    ASSERT_NEAR(blackman(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(smootherstep(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(kaiser(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(poisson(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(plancktaper(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(lanczos(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(sechwindow(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
 
     ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_COSINE), "cosine") == 0);
     ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_TRAPEZOID), "trapezoid") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_BLACKMANHARRIS), "blackmanharris") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_SMOOTHERSTEP), "smootherstep") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_SINE), "sine") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_POISSON), "poisson") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_PLANCKTAPER), "plancktaper") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_LAPLACE), "laplace") == 0);
     ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_INVALID), "invalid") == 0);
     ASSERT_EQ_INT(blend_window_function_from_name("boxcar", &parsed), SUCCESS);
     ASSERT_EQ_INT(parsed, WFUNC_BOXCAR);
     ASSERT_EQ_INT(blend_window_function_from_name("cosine", &parsed), SUCCESS);
     ASSERT_EQ_INT(parsed, WFUNC_COSINE);
+    ASSERT_EQ_INT(blend_window_function_from_name("hann", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_COSINE);
+    ASSERT_EQ_INT(blend_window_function_from_name("tukey", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_COSINE);
     ASSERT_EQ_INT(blend_window_function_from_name("trapezoid", &parsed), SUCCESS);
     ASSERT_EQ_INT(parsed, WFUNC_TRAPEZOID);
+    ASSERT_EQ_INT(blend_window_function_from_name("linear", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_TRAPEZOID);
+    ASSERT_EQ_INT(blend_window_function_from_name("hamming", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_HAMMING);
+    ASSERT_EQ_INT(blend_window_function_from_name("blackman", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_BLACKMAN);
+    ASSERT_EQ_INT(blend_window_function_from_name("blackmanharris", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_BLACKMANHARRIS);
+    ASSERT_EQ_INT(blend_window_function_from_name("welch", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_WELCH);
+    ASSERT_EQ_INT(blend_window_function_from_name("parzen", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_PARZEN);
+    ASSERT_EQ_INT(blend_window_function_from_name("gaussian", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_GAUSSIAN);
+    ASSERT_EQ_INT(blend_window_function_from_name("smoothstep", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_SMOOTHSTEP);
+    ASSERT_EQ_INT(blend_window_function_from_name("smootherstep", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_SMOOTHERSTEP);
+    ASSERT_EQ_INT(blend_window_function_from_name("exponential", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_EXPONENTIAL);
+    ASSERT_EQ_INT(blend_window_function_from_name("sine", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_SINE);
+    ASSERT_EQ_INT(blend_window_function_from_name("bohman", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_BOHMAN);
+    ASSERT_EQ_INT(blend_window_function_from_name("nuttall", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_NUTTALL);
+    ASSERT_EQ_INT(blend_window_function_from_name("kaiser", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_KAISER);
+    ASSERT_EQ_INT(blend_window_function_from_name("cauchy", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_CAUCHY);
+    ASSERT_EQ_INT(blend_window_function_from_name("quadratic", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_QUADRATIC);
+    ASSERT_EQ_INT(blend_window_function_from_name("cubic", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_CUBIC);
+    ASSERT_EQ_INT(blend_window_function_from_name("poisson", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_POISSON);
+    for (p = 0; p < sizeof(parse_cases) / sizeof(parse_cases[0]); p++) {
+        ASSERT_EQ_INT(blend_window_function_from_name(parse_cases[p].name, &parsed), SUCCESS);
+        ASSERT_EQ_INT(parsed, parse_cases[p].function);
+    }
     ASSERT_EQ_INT(blend_window_function_from_name("scosine", &parsed), FAIL);
     ASSERT_EQ_INT(blend_window_function_from_name("ecosine", &parsed), FAIL);
     ASSERT_EQ_INT(blend_window_function_from_name("strapezoid", &parsed), FAIL);
@@ -522,6 +710,10 @@ static int test_window_functions(void)
     ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.1, 0.2, WFUNC_COSINE), 0.853553390593, 1e-12);
     ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, 0.1, WFUNC_TRAPEZOID), 0.25, DBL_EPSILON);
     ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.1, 0.2, WFUNC_TRAPEZOID), 0.75, DBL_EPSILON);
+    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, 0.1, WFUNC_SMOOTHSTEP), 0.15625, DBL_EPSILON);
+    ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.1, 0.2, WFUNC_SMOOTHSTEP), 0.84375, DBL_EPSILON);
+    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, 0.1, WFUNC_QUADRATIC), 0.0625, DBL_EPSILON);
+    ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.1, 0.2, WFUNC_QUADRATIC), 0.5625, DBL_EPSILON);
     ASSERT_NEAR(window_function(0, 1, 10, 10, 10, 0.2, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
     ASSERT_NEAR(window_function(11, 1, 10, 10, 10, 0.2, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
     ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.5, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
@@ -529,13 +721,11 @@ static int test_window_functions(void)
     ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.2, WFUNC_INVALID), WFUNC_ERROR, DBL_EPSILON);
 
     for (i = 1; i <= 41; i++) {
-        double boxcar_weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, WFUNC_BOXCAR);
-        double cosine_weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, WFUNC_COSINE);
-        double trapezoid_weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, WFUNC_TRAPEZOID);
+        for (f = 0; f < sizeof(functions) / sizeof(functions[0]); f++) {
+            double weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, functions[f]);
 
-        ASSERT_TRUE(boxcar_weight >= 0.0 && boxcar_weight <= 1.0);
-        ASSERT_TRUE(cosine_weight >= 0.0 && cosine_weight <= 1.0);
-        ASSERT_TRUE(trapezoid_weight >= 0.0 && trapezoid_weight <= 1.0);
+            ASSERT_TRUE(weight >= 0.0 && weight <= 1.0);
+        }
     }
 
     return SUCCESS;

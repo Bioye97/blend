@@ -31,6 +31,56 @@ typedef enum blend_window_function {
     WFUNC_BOXCAR = 0,
     WFUNC_COSINE,
     WFUNC_TRAPEZOID,
+    WFUNC_HAMMING,
+    WFUNC_BLACKMAN,
+    WFUNC_BLACKMANHARRIS,
+    WFUNC_WELCH,
+    WFUNC_PARZEN,
+    WFUNC_GAUSSIAN,
+    WFUNC_SMOOTHSTEP,
+    WFUNC_SMOOTHERSTEP,
+    WFUNC_EXPONENTIAL,
+    WFUNC_SINE,
+    WFUNC_BOHMAN,
+    WFUNC_NUTTALL,
+    WFUNC_KAISER,
+    WFUNC_CAUCHY,
+    WFUNC_QUADRATIC,
+    WFUNC_CUBIC,
+    WFUNC_POISSON,
+    WFUNC_BARTLETT,
+    WFUNC_BARTLETTHANN,
+    WFUNC_EXACTBLACKMAN,
+    WFUNC_BLACKMANNUTTALL,
+    WFUNC_FLATTOP,
+    WFUNC_LANCZOS,
+    WFUNC_RIESZ,
+    WFUNC_RIEMANN,
+    WFUNC_FEJER,
+    WFUNC_CONNES,
+    WFUNC_HANNINGPOISSON,
+    WFUNC_KAISERBESSEL,
+    WFUNC_PLANCKTAPER,
+    WFUNC_QUARTIC,
+    WFUNC_QUINTIC,
+    WFUNC_SEPTIC,
+    WFUNC_NONIC,
+    WFUNC_LOGISTIC,
+    WFUNC_TANH,
+    WFUNC_ERF,
+    WFUNC_ARCTAN,
+    WFUNC_GOMPERTZ,
+    WFUNC_SOFTSIGN,
+    WFUNC_AGNESI,
+    WFUNC_INVERSEQUADRATIC,
+    WFUNC_INVERSEMULTIQUADRIC,
+    WFUNC_POWERLAW,
+    WFUNC_ROOT,
+    WFUNC_CIRCULAR,
+    WFUNC_SECH,
+    WFUNC_SECH2,
+    WFUNC_STUDENT,
+    WFUNC_LAPLACE,
     WFUNC_INVALID
 } blend_window_function;
 
@@ -255,6 +305,156 @@ double cosine(int x, int n, int nmax, int nmin, double r1, double r2);
 
 /* trapezoid function */
 double trapezoid(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* hamming function */
+double hamming(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* blackman function */
+double blackman(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* blackman-harris function */
+double blackmanharris(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* welch function */
+double welch(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* parzen function */
+double parzen(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* gaussian function */
+double gaussian(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* smoothstep function */
+double smoothstep(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* smootherstep function */
+double smootherstep(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* exponential function */
+double exponential(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* sine function */
+double sine(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* bohman function */
+double bohman(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* nuttall function */
+double nuttall(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* kaiser function */
+double kaiser(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* cauchy function */
+double cauchy(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* quadratic function */
+double quadratic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* cubic function */
+double cubic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* poisson function */
+double poisson(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* bartlett function */
+double bartlett(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* bartlett-hann function */
+double bartletthann(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* exact blackman function */
+double exactblackman(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* blackman-nuttall function */
+double blackmannuttall(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* flat-top function */
+double flattop(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* lanczos function */
+double lanczos(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* riesz function */
+double riesz(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* riemann function */
+double riemann(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* fejer function */
+double fejer(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* connes function */
+double connes(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* hanning-poisson function */
+double hanningpoisson(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* kaiser-bessel function */
+double kaiserbessel(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* planck-taper function */
+double plancktaper(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* quartic function */
+double quartic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* quintic function */
+double quintic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* septic function */
+double septic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* nonic function */
+double nonic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* logistic function */
+double logistic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* tanh function */
+double tanhwindow(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* erf function */
+double erfwindow(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* arctan function */
+double arctanwindow(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* gompertz function */
+double gompertz(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* softsign function */
+double softsign(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* agnesi function */
+double agnesi(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* inverse quadratic function */
+double inversequadratic(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* inverse multiquadric function */
+double inversemultiquadric(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* power-law function */
+double powerlaw(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* root function */
+double root(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* circular function */
+double circular(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* hyperbolic secant function */
+double sechwindow(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* squared hyperbolic secant function */
+double sech2window(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* student function */
+double student(int x, int n, int nmax, int nmin, double r1, double r2);
+
+/* laplace function */
+double laplace(int x, int n, int nmax, int nmin, double r1, double r2);
 
 /* Embedding contribution for 1D case: Blending weight */
 int embedding_contribution1d(int x, window *data);
