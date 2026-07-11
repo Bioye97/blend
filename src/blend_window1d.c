@@ -40,7 +40,6 @@ typedef struct window1d_options {
     int has_function;
     int has_taper;
     blend_window_function function;
-    const char *output;
     const char *blendfile;
     char clobber;
 } window1d_options;
@@ -49,7 +48,7 @@ static void window1d_usage(FILE *fp)
 {
     fprintf(fp, "blend window1d - Generate 1-D blending weights\n\n");
     fprintf(fp, "usage: blend window1d -R<xmin>/<xmax> -I<dx> [-F<function>] [-T<r1>[/<r2>]]\n");
-    fprintf(fp, "       [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-G<file>] [-V[q|e|w|t|i|c|d]]\n");
+    fprintf(fp, "       [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-V[q|e|w|t|i|c|d]]\n");
     fprintf(fp, "\n");
 
     fprintf(fp, "Generate 1-D blending weights and write two columns: x weight. If x coordinates\n");
@@ -108,9 +107,6 @@ static void window1d_usage(FILE *fp)
     fprintf(fp, "       g  Use the geometric average of overlapping weights.\n");
     fprintf(fp, "       p  Use the product of overlapping weights.\n\n");
 
-    fprintf(fp, "  -G<file>, --output=<file>\n");
-    fprintf(fp, "     Write output to <file> instead of standard output.\n\n");
-
     fprintf(fp, "  -V[level], --verbose=<level>\n");
     fprintf(fp, "     Select verbosity level [w]. Choose among q, e, w, t, i, c, and d:\n");
     fprintf(fp, "       q  Quiet; suppress all diagnostic messages.\n");
@@ -131,6 +127,7 @@ static void window1d_usage(FILE *fp)
     fprintf(fp, "     Query the interpolated weight at x = 2.5.\n\n");
     fprintf(fp, "  blend window1d -R0/10 -I0.5 -Bsupports.txt -Ca\n");
     fprintf(fp, "     Read multiple interval supports from supports.txt and average overlaps.\n");
+    fprintf(fp, "     Use shell redirection to write the output to a file, e.g., > weights.txt.\n");
 }
 
 static int window1d_parse_double(const char *text, const char *name, double *value)
@@ -280,7 +277,6 @@ static int window1d_parse_options(int argc, char **argv, window1d_options *optio
     options->has_increment = 0;
     options->has_function = 0;
     options->has_taper = 0;
-    options->output = NULL;
     options->blendfile = NULL;
     options->clobber = 'p';
     options->function = WFUNC_COSINE;
@@ -362,17 +358,6 @@ static int window1d_parse_options(int argc, char **argv, window1d_options *optio
         }
         else if (strncmp(arg, "--clobber=", 10) == 0) {
             if (window1d_parse_clobber(arg + 10, options) != SUCCESS) return FAIL;
-        }
-        else if (strcmp(arg, "-G") == 0 || strcmp(arg, "--output") == 0) {
-            value = window1d_option_value(argc, argv, &i, arg);
-            if (value == NULL) return FAIL;
-            options->output = value;
-        }
-        else if (strncmp(arg, "-G", 2) == 0 && arg[2] != '\0') {
-            options->output = arg + 2;
-        }
-        else if (strncmp(arg, "--output=", 9) == 0) {
-            options->output = arg + 9;
         }
         else {
             BLEND_Report(BLEND_MSG_ERROR, "window1d: unknown option: %s\n", arg);
@@ -944,7 +929,6 @@ int blend_window1d_module(int argc, char **argv)
     window1d_support_list supports = {0};
     window1d_support_list *support_list = NULL;
     window data;
-    FILE *fp = stdout;
     int parse_status;
     int n_queries = 0;
     int status;
@@ -969,41 +953,20 @@ int blend_window1d_module(int argc, char **argv)
         support_list = &supports;
     }
 
-    if (options.output != NULL) {
-        fp = fopen(options.output, "w");
-        if (fp == NULL) {
-            BLEND_Report(BLEND_MSG_ERROR, "%s: %s\n", options.output, strerror(errno));
-            window1d_support_list_free(&supports);
-            return FAIL;
-        }
-    }
-
     if (!isatty(STDIN_FILENO)) {
-        status = window1d_write_queries(fp, &options, &data, support_list, &n_queries);
+        status = window1d_write_queries(stdout, &options, &data, support_list, &n_queries);
         if (status != SUCCESS) {
-            if (fp != stdout) {
-                fclose(fp);
-            }
             window1d_support_list_free(&supports);
             return FAIL;
         }
     }
 
     if (n_queries == 0) {
-        status = window1d_write_grid(fp, &options, &data, support_list);
+        status = window1d_write_grid(stdout, &options, &data, support_list);
         if (status != SUCCESS) {
-            if (fp != stdout) {
-                fclose(fp);
-            }
             window1d_support_list_free(&supports);
             return FAIL;
         }
-    }
-
-    if (fp != stdout && fclose(fp) != 0) {
-        BLEND_Report(BLEND_MSG_ERROR, "%s: %s\n", options.output, strerror(errno));
-        window1d_support_list_free(&supports);
-        return FAIL;
     }
 
     window1d_support_list_free(&supports);
