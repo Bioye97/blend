@@ -150,6 +150,11 @@ void BLEND_Report(blend_verbosity level, const char *format, ...);
 /* Linear interpolation */
 int interpolate_linear(double x0, double y0, double x1, double y1, double x, double *y);
 
+/* Bilinear interpolation */
+int interpolate_bilinear(double x0, double x1, double y0, double y1,
+                         double q00, double q10, double q01, double q11,
+                         double x, double y, double *value);
+
 /* Window function name */
 const char *blend_window_function_name(blend_window_function function);
 
@@ -226,7 +231,11 @@ int maximum_columnstep(window *data, permuted_vertex *vertex);
 /* Assemble the boundary and stepping vectors for window function */
 int boundary_assembly(window *data, permuted_vertex *vertex);
 
-/* TODO: implement solution to finding a close xy-montone boundary */
+/* Clear boundary classification vertices */
+void blend_permuted_vertex_free(permuted_vertex *vertex);
+
+/* Clear polygon and stepping vectors assigned to a window */
+void blend_window_boundary_clear(window *data);
 
 /* Window/Taper function */
 double window_function(int x, int x1, int x2, int n, int nmin,

@@ -6,6 +6,56 @@
 
 #include "blend.h"
 
+static void blend_boundary_free_points(double **points, int rows)
+{
+    int i;
+
+    if (points == NULL) {
+        return;
+    }
+
+    for (i = 0; i < rows; i++) {
+        free(points[i]);
+    }
+    free(points);
+}
+
+void blend_permuted_vertex_free(permuted_vertex *vertex)
+{
+    if (vertex == NULL) {
+        return;
+    }
+
+    blend_boundary_free_points(vertex->bottom_vertices, vertex->row_size_bv);
+    blend_boundary_free_points(vertex->bottom_to_left_vertices, vertex->row_size_btlv);
+    blend_boundary_free_points(vertex->left_vertices, vertex->row_size_lv);
+    blend_boundary_free_points(vertex->left_to_top_vertices, vertex->row_size_lttv);
+    blend_boundary_free_points(vertex->top_vertices, vertex->row_size_tv);
+    blend_boundary_free_points(vertex->right_to_top_vertices, vertex->row_size_rttv);
+    blend_boundary_free_points(vertex->right_vertices, vertex->row_size_rv);
+    blend_boundary_free_points(vertex->bottom_to_right_vertices, vertex->row_size_btrv);
+    memset(vertex, 0, sizeof(*vertex));
+}
+
+void blend_window_boundary_clear(window *data)
+{
+    if (data == NULL) {
+        return;
+    }
+
+    blend_window_clear_polygon(data);
+    free(data->nnx1);
+    free(data->nnx2);
+    free(data->nny1);
+    free(data->nny2);
+    data->nnx1 = NULL;
+    data->nnx2 = NULL;
+    data->nny1 = NULL;
+    data->nny2 = NULL;
+    data->minnx = 0;
+    data->minny = 0;
+}
+
 int unique_vertices(double **array, int row_length) {
     /* Sort and update data->vertices and update data->row_size */
 

@@ -82,8 +82,8 @@ static void window1d_usage(FILE *fp)
     fprintf(fp, "  -T<r1>[/<r2>], --taper_ratio=<r1>[/<r2>]\n");
     fprintf(fp, "     Set beginning and ending taper ratios for a single support over the full\n");
     fprintf(fp, "     -R domain. Ratios must be >= 0 and < 0.5. If r2 is omitted then r2 = r1.\n");
-    fprintf(fp, "     [Default is 0.2/0.2]. This option is ignored when -B is given, since each\n");
-    fprintf(fp, "     blendfile row supplies its own taper ratios.\n\n");
+    fprintf(fp, "     [Default is 0.2/0.2]. This option is ignored for boxcar windows and when\n");
+    fprintf(fp, "     -B is given, since each blendfile row supplies its own taper ratios.\n\n");
 
     fprintf(fp, "  -B<blendfile>, --blendfile=<blendfile>\n");
     fprintf(fp, "     Read one or more interval supports from <blendfile>. Each non-empty,\n");
@@ -92,7 +92,7 @@ static void window1d_usage(FILE *fp)
     fprintf(fp, "     where <left>/<right> define an interval contained inside the -R domain,\n");
     fprintf(fp, "     <function> is any supported window function listed by blend --show-windows,\n");
     fprintf(fp, "     and <r1>/<r2> are taper ratios for that interval. Lines may contain\n");
-    fprintf(fp, "     comments introduced by '#'.\n");
+    fprintf(fp, "     comments introduced by '#'. Taper ratios are ignored for boxcar windows.\n");
     fprintf(fp, "     Example row for -R0/10:\n");
     fprintf(fp, "       2 3 cosine 0.2/0.2\n");
     fprintf(fp, "     Grid points not covered by any blendfile interval receive weight 0.\n\n");
@@ -394,6 +394,9 @@ static int window1d_parse_options(int argc, char **argv, window1d_options *optio
             BLEND_Report(BLEND_MSG_WARNING, "window1d: -T/--taper_ratio is ignored when -B/--blendfile is given\n");
         }
     }
+    else if (options->function == WFUNC_BOXCAR && options->has_taper) {
+        BLEND_Report(BLEND_MSG_WARNING, "window1d: -T/--taper_ratio is ignored for boxcar windows\n");
+    }
 
     {
         double old_xmax = options->xmax;
@@ -529,6 +532,11 @@ static int window1d_parse_blendfile_line(const char *line, long line_number,
     if (window1d_parse_taper_ratio_values(taper_ratio, "blendfile", &support->ratio1, &support->ratio2) != SUCCESS) {
         BLEND_Report(BLEND_MSG_ERROR, "window1d: invalid taper ratio on blendfile line %ld\n", line_number);
         return FAIL;
+    }
+
+    if (support->function == WFUNC_BOXCAR && (support->ratio1 != 0.0 || support->ratio2 != 0.0)) {
+        BLEND_Report(BLEND_MSG_WARNING, "window1d: taper ratios on blendfile line %ld are ignored for boxcar windows\n",
+                     line_number);
     }
 
     return window1d_support_grid_size(options, support, &support->nx);

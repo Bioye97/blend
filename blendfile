@@ -1,0 +1,4 @@
+0 20 cosine 0.2/0.2
+20 40 boxcar 0.2/0.2
+40 60 trapezoid 0.2/0.2
+80 100 cosine 0.2/0.2

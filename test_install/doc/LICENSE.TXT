@@ -1,0 +1,7 @@
+BLEND is licensed under the GNU Lesser General Public License,
+version 3 or any later version.
+
+Copyright (c) 2020 - 2026, Rasheed Ajala.
+
+See COPYING.LESSER for the LGPLv3 license text. See COPYING for the
+GNU GPLv3 license text incorporated by the LGPLv3.

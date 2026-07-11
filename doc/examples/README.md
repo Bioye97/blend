@@ -8,7 +8,8 @@ ex01, ex02, ...
 
 Each example directory contains:
 
-- `exNN.c`: C source code for the example
+- `exNN.c`: C source code for compiled library examples, when applicable
+- `exNN.sh`: shell driver for command-line module examples, when applicable
 - `exNN.gp`: optional gnuplot script
 
 When an example is run, it writes an `exNN.txt` data file in the current
@@ -31,6 +32,8 @@ Current examples:
   100 grid
 - `ex12`: 3D cosine taper over the same 4-pointed isotoxal-star support as
   `ex11`, using a 100 by 100 by 25 grid
+- `ex13`: command-line `blend monotone` example using a simplified South
+  America polygon and the `-Me` xy-monotone envelope method
 
 The 1D examples write:
 
@@ -49,6 +52,9 @@ The 3D examples write:
 ```text
 x y z weight
 ```
+
+The command-line module examples write module-specific text files. For example,
+`ex13` writes `ex13_status.txt` and `ex13_monotone.txt`.
 
 ## Build Examples With CMake
 

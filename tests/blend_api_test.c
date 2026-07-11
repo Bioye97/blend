@@ -62,6 +62,69 @@ static void free_points(double **points, int rows)
     free(points);
 }
 
+static int polygon_test_contains(const polygon *poly, double x, double y)
+{
+    size_t i, j;
+    int inside = 0;
+
+    for (i = 0, j = poly->n_vertices - 1; i < poly->n_vertices; j = i++) {
+        const vertex *vi = &poly->vertices[i];
+        const vertex *vj = &poly->vertices[j];
+
+        if (((vi->y > y) != (vj->y > y)) &&
+            (x < (vj->x - vi->x) * (y - vi->y) / (vj->y - vi->y) + vi->x)) {
+            inside = !inside;
+        }
+    }
+
+    return inside;
+}
+
+static double polygon_test_iou(const polygon *a, const polygon *b)
+{
+    const int samples = 64;
+    double xmin = fmin(a->vertices[0].x, b->vertices[0].x);
+    double xmax = fmax(a->vertices[0].x, b->vertices[0].x);
+    double ymin = fmin(a->vertices[0].y, b->vertices[0].y);
+    double ymax = fmax(a->vertices[0].y, b->vertices[0].y);
+    int intersection_count = 0;
+    int union_count = 0;
+    int ix, iy;
+    size_t i;
+
+    for (i = 0; i < a->n_vertices; i++) {
+        if (a->vertices[i].x < xmin) xmin = a->vertices[i].x;
+        if (a->vertices[i].x > xmax) xmax = a->vertices[i].x;
+        if (a->vertices[i].y < ymin) ymin = a->vertices[i].y;
+        if (a->vertices[i].y > ymax) ymax = a->vertices[i].y;
+    }
+    for (i = 0; i < b->n_vertices; i++) {
+        if (b->vertices[i].x < xmin) xmin = b->vertices[i].x;
+        if (b->vertices[i].x > xmax) xmax = b->vertices[i].x;
+        if (b->vertices[i].y < ymin) ymin = b->vertices[i].y;
+        if (b->vertices[i].y > ymax) ymax = b->vertices[i].y;
+    }
+
+    for (iy = 0; iy < samples; iy++) {
+        double y = ymin + ((double)iy + 0.5) * (ymax - ymin) / (double)samples;
+
+        for (ix = 0; ix < samples; ix++) {
+            double x = xmin + ((double)ix + 0.5) * (xmax - xmin) / (double)samples;
+            int inside_a = polygon_test_contains(a, x, y);
+            int inside_b = polygon_test_contains(b, x, y);
+
+            if (inside_a || inside_b) {
+                union_count++;
+                if (inside_a && inside_b) {
+                    intersection_count++;
+                }
+            }
+        }
+    }
+
+    return union_count == 0 ? 0.0 : (double)intersection_count / (double)union_count;
+}
+
 static void init_rectangle(window *data, int nx, int ny)
 {
     data->row_size = 4;
@@ -250,9 +313,183 @@ static int test_polygon_data_model(void)
     return SUCCESS;
 }
 
+static int test_polygon_api_functions(void)
+{
+    polygon square = {0};
+    polygon closed = {0};
+    polygon grid = {0};
+    polygon u_shape = {0};
+    polygon monotone_exact = {0};
+    polygon monotone_envelope = {0};
+    polygon piecewise_input = {0};
+    polygon full_envelope = {0};
+    polygon best_envelope = {0};
+    polygon reversed_input = {0};
+    polygon reversed_best = {0};
+    polygon bowtie = {0};
+    polygon read_back = {0};
+    polygon invalid = {0};
+    vertex point = {0};
+    double xmin, xmax, ymin, ymax;
+    size_t i;
+    int flag;
+    char path[256];
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&square, 4), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&square, 0, 0.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&square, 1, 2.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&square, 2, 2.0, 2.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&square, 3, 0.0, 2.0), SUCCESS);
+
+    ASSERT_EQ_INT(blend_polygon_validate(&square), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_bounds(&square, &xmin, &xmax, &ymin, &ymax), SUCCESS);
+    ASSERT_NEAR(xmin, 0.0, DBL_EPSILON);
+    ASSERT_NEAR(xmax, 2.0, DBL_EPSILON);
+    ASSERT_NEAR(ymin, 0.0, DBL_EPSILON);
+    ASSERT_NEAR(ymax, 2.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(blend_polygon_contains_point(&square, 1.0, 1.0, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_contains_point(&square, 0.0, 1.0, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_contains_point(&square, 3.0, 1.0, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 0);
+
+    ASSERT_EQ_INT(blend_polygon_is_closed(&square, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 0);
+    ASSERT_EQ_INT(blend_polygon_copy(&square, &closed), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_close(&closed), SUCCESS);
+    ASSERT_EQ_INT((int)closed.n_vertices, 5);
+    ASSERT_EQ_INT(blend_polygon_is_closed(&closed, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+
+    ASSERT_EQ_INT(blend_polygon_map_to_grid(&square, 0.0, 2.0, 0.0, 2.0, 5, 5, &grid), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_get_vertex(&grid, 2, &point), SUCCESS);
+    ASSERT_NEAR(point.x, 4.0, DBL_EPSILON);
+    ASSERT_NEAR(point.y, 4.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&square, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_is_simple(&square, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_envelope(&square, &monotone_exact), SUCCESS);
+    ASSERT_EQ_INT((int)monotone_exact.n_vertices, 4);
+    ASSERT_EQ_INT(blend_polygon_get_vertex(&monotone_exact, 2, &point), SUCCESS);
+    ASSERT_NEAR(point.x, 2.0, DBL_EPSILON);
+    ASSERT_NEAR(point.y, 2.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&u_shape, 8), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 0, 0.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 1, 3.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 2, 3.0, 3.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 3, 2.0, 3.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 4, 2.0, 1.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 5, 1.0, 1.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 6, 1.0, 3.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 7, 0.0, 3.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&u_shape, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 0);
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_envelope(&u_shape, &monotone_envelope), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&monotone_envelope, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_contains_point(&monotone_envelope, 1.5, 0.5, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_contains_point(&monotone_envelope, 1.5, 2.5, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_bounds(&monotone_envelope, &xmin, &xmax, &ymin, &ymax), SUCCESS);
+    ASSERT_NEAR(xmin, 0.0, DBL_EPSILON);
+    ASSERT_NEAR(xmax, 3.0, DBL_EPSILON);
+    ASSERT_NEAR(ymin, 0.0, DBL_EPSILON);
+    ASSERT_NEAR(ymax, 3.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&piecewise_input, 14), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 0, 0.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 1, 4.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 2, 4.5, 0.5), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 3, 5.0, 1.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 4, 5.0, 4.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 5, 4.7, 4.4), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 6, 4.0, 5.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 7, 1.0, 5.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 8, 0.7, 4.7), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 9, 0.3, 4.4), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 10, -1.0, 4.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 11, -1.0, 1.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 12, -0.2, 0.8), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&piecewise_input, 13, -0.8, 0.4), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&piecewise_input, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 0);
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_envelope(&piecewise_input, &full_envelope), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_best_piecewise_envelope(&piecewise_input, &best_envelope,
+                                                                    -1.0, 5.0, 0.0, 5.0, 256, 256), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&best_envelope, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_TRUE(polygon_test_iou(&piecewise_input, &best_envelope) >=
+                polygon_test_iou(&piecewise_input, &full_envelope));
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&reversed_input, piecewise_input.n_vertices), SUCCESS);
+    for (i = 0; i < piecewise_input.n_vertices; i++) {
+        ASSERT_EQ_INT(blend_polygon_set_vertex(&reversed_input, i,
+                                               piecewise_input.vertices[piecewise_input.n_vertices - 1 - i].x,
+                                               piecewise_input.vertices[piecewise_input.n_vertices - 1 - i].y),
+                      SUCCESS);
+    }
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_best_piecewise_envelope(&reversed_input, &reversed_best,
+                                                                    -1.0, 5.0, 0.0, 5.0, 256, 256), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&reversed_best, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_NEAR(polygon_test_iou(&piecewise_input, &reversed_best),
+                polygon_test_iou(&piecewise_input, &best_envelope), 1.0e-12);
+
+    ASSERT_EQ_INT(blend_polygon_is_simple(&closed, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&bowtie, 4), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&bowtie, 0, 0.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&bowtie, 1, 2.0, 2.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&bowtie, 2, 0.0, 2.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&bowtie, 3, 2.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_simple(&bowtie, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 0);
+    ASSERT_EQ_INT(blend_polygon_validate(&bowtie), FAIL);
+
+    snprintf(path, sizeof(path), "/tmp/blend_polygon_api_%ld.txt", (long)getpid());
+    ASSERT_EQ_INT(blend_polygon_write(path, &square), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_read(path, &read_back), SUCCESS);
+    ASSERT_EQ_INT((int)read_back.n_vertices, 4);
+    ASSERT_EQ_INT(blend_polygon_bounds(&read_back, &xmin, &xmax, &ymin, &ymax), SUCCESS);
+    ASSERT_NEAR(xmax, 2.0, DBL_EPSILON);
+    ASSERT_NEAR(ymax, 2.0, DBL_EPSILON);
+    unlink(path);
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&invalid, 2), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&invalid, 0, 0.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&invalid, 1, 1.0, 1.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_validate(&invalid), FAIL);
+    ASSERT_EQ_INT(blend_polygon_map_to_grid(&square, 0.5, 2.0, 0.0, 2.0, 5, 5, &grid), FAIL);
+
+    blend_polygon_free(&square);
+    blend_polygon_free(&closed);
+    blend_polygon_free(&grid);
+    blend_polygon_free(&u_shape);
+    blend_polygon_free(&monotone_exact);
+    blend_polygon_free(&monotone_envelope);
+    blend_polygon_free(&piecewise_input);
+    blend_polygon_free(&full_envelope);
+    blend_polygon_free(&best_envelope);
+    blend_polygon_free(&reversed_input);
+    blend_polygon_free(&reversed_best);
+    blend_polygon_free(&bowtie);
+    blend_polygon_free(&read_back);
+    blend_polygon_free(&invalid);
+
+    return SUCCESS;
+}
+
 static int test_window_functions(void)
 {
     blend_window_function parsed = WFUNC_INVALID;
+    int i;
 
     ASSERT_NEAR(boxcar(), 1.0, DBL_EPSILON);
     ASSERT_NEAR(cosine(1, 10, 10, 10, 0.2, 0.2), 0.146446609407, 1e-12);
@@ -261,6 +498,7 @@ static int test_window_functions(void)
     ASSERT_NEAR(trapezoid(1, 10, 10, 10, 0.2, 0.2), 0.25, DBL_EPSILON);
     ASSERT_NEAR(trapezoid(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
     ASSERT_NEAR(trapezoid(9, 10, 10, 10, 0.1, 0.2), 0.75, DBL_EPSILON);
+    ASSERT_NEAR(trapezoid(33, 41, 41, 41, 0.2, 0.2), 1.0, DBL_EPSILON);
 
     ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_COSINE), "cosine") == 0);
     ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_TRAPEZOID), "trapezoid") == 0);
@@ -289,6 +527,16 @@ static int test_window_functions(void)
     ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.5, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
     ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.5, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
     ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.2, WFUNC_INVALID), WFUNC_ERROR, DBL_EPSILON);
+
+    for (i = 1; i <= 41; i++) {
+        double boxcar_weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, WFUNC_BOXCAR);
+        double cosine_weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, WFUNC_COSINE);
+        double trapezoid_weight = window_function(i, 1, 41, 41, 41, 0.2, 0.2, WFUNC_TRAPEZOID);
+
+        ASSERT_TRUE(boxcar_weight >= 0.0 && boxcar_weight <= 1.0);
+        ASSERT_TRUE(cosine_weight >= 0.0 && cosine_weight <= 1.0);
+        ASSERT_TRUE(trapezoid_weight >= 0.0 && trapezoid_weight <= 1.0);
+    }
 
     return SUCCESS;
 }
@@ -330,6 +578,9 @@ static int test_boundary_box_and_assembly_helpers(void)
     ASSERT_EQ_INT(vertex.row_size_rttv, 0);
     ASSERT_EQ_INT(vertex.row_size_btrv, 0);
 
+    blend_permuted_vertex_free(&vertex);
+    blend_window_boundary_clear(&data);
+
     return SUCCESS;
 }
 
@@ -365,6 +616,9 @@ static int test_assembly_helpers_with_quadrant_vertices(void)
     ASSERT_EQ_INT(vertex.row_size_btrv, 1);
     ASSERT_NEAR(vertex.bottom_to_right_vertices[0][0], 8, DBL_EPSILON);
     ASSERT_NEAR(vertex.bottom_to_right_vertices[0][1], 1, DBL_EPSILON);
+
+    blend_permuted_vertex_free(&vertex);
+    blend_window_boundary_clear(&data);
 
     return SUCCESS;
 }
@@ -437,6 +691,9 @@ static int test_boundary_assembly_and_contribution(void)
     ASSERT_TRUE(data.contribution > 0.0);
     ASSERT_TRUE(data.contribution < 1.0);
 
+    blend_permuted_vertex_free(&vertex);
+    blend_window_boundary_clear(&data);
+
     return SUCCESS;
 }
 
@@ -452,6 +709,26 @@ static int test_linear_interpolation(void)
 
     ASSERT_EQ_INT(interpolate_linear(1.0, 2.0, 1.0, 4.0, 1.0, &value), FAIL);
     ASSERT_EQ_INT(interpolate_linear(0.0, 2.0, 1.0, 4.0, 0.5, NULL), FAIL);
+
+    ASSERT_EQ_INT(interpolate_bilinear(0.0, 10.0, 0.0, 20.0,
+                                       0.0, 10.0, 20.0, 30.0,
+                                       2.5, 5.0, &value), SUCCESS);
+    ASSERT_NEAR(value, 7.5, DBL_EPSILON);
+
+    ASSERT_EQ_INT(interpolate_bilinear(10.0, 0.0, 20.0, 0.0,
+                                       30.0, 20.0, 10.0, 0.0,
+                                       2.5, 5.0, &value), SUCCESS);
+    ASSERT_NEAR(value, 7.5, DBL_EPSILON);
+
+    ASSERT_EQ_INT(interpolate_bilinear(1.0, 1.0, 0.0, 1.0,
+                                       0.0, 1.0, 2.0, 3.0,
+                                       1.0, 0.5, &value), FAIL);
+    ASSERT_EQ_INT(interpolate_bilinear(0.0, 1.0, 1.0, 1.0,
+                                       0.0, 1.0, 2.0, 3.0,
+                                       0.5, 1.0, &value), FAIL);
+    ASSERT_EQ_INT(interpolate_bilinear(0.0, 1.0, 0.0, 1.0,
+                                       0.0, 1.0, 2.0, 3.0,
+                                       0.5, 0.5, NULL), FAIL);
 
     return SUCCESS;
 }
@@ -497,6 +774,7 @@ int main(void)
 {
     ASSERT_EQ_INT(test_version_header(), SUCCESS);
     ASSERT_EQ_INT(test_polygon_data_model(), SUCCESS);
+    ASSERT_EQ_INT(test_polygon_api_functions(), SUCCESS);
     ASSERT_EQ_INT(test_sorting_and_unique_vertices(), SUCCESS);
     ASSERT_EQ_INT(test_window_functions(), SUCCESS);
     ASSERT_EQ_INT(test_boundary_box_and_assembly_helpers(), SUCCESS);

@@ -153,6 +153,48 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(NAME blend_cli_module_exists COMMAND blend docs =)
   add_test(
+    NAME blend_monotone_usage_no_error
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> monotone --help > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend monotone - Check or enforce xy-monotone polygon boundaries' $tmp/out && grep -q '^usage: blend monotone' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_monotone_file_check
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n2 0\\n2 2\\n0 2\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone $tmp/poly.txt; status=$?; rm -rf $tmp; exit $status"
+  )
+  set_tests_properties(
+    blend_monotone_file_check
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "monotone: polygon is xy-monotone"
+  )
+  add_test(
+    NAME blend_monotone_stdin_check
+    COMMAND bash -c "printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' | $<TARGET_FILE:blend> monotone"
+  )
+  set_tests_properties(
+    blend_monotone_stdin_check
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "monotone: polygon is not xy-monotone"
+  )
+  add_test(
+    NAME blend_monotone_envelope
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone -Me $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using envelope method' $tmp/err && awk 'END {if (NR != 4) exit 1} ($1==0 && $2==0){a=1} ($1==3 && $2==0){b=1} ($1==3 && $2==3){c=1} ($1==0 && $2==3){d=1} END {exit !(a && b && c && d)}' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_monotone_best_piecewise_envelope
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; awk '{line[NR]=$0} END{for(i=NR;i>0;i--) print line[i]}' $tmp/poly.txt > $tmp/rev.txt; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/rev.txt > $tmp/rev_out 2> $tmp/rev_err; rev_status=$?; grep -q 'using best IoU piecewise envelope method' $tmp/err && grep -q 'using best IoU piecewise envelope method' $tmp/rev_err && cmp -s $tmp/out $tmp/rev_out && $<TARGET_FILE:blend> monotone $tmp/out | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && test $rev_status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_monotone_envelope_already_monotone
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n2 0\\n2 2\\n0 2\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone -Me $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q '^monotone: polygon is already xy-monotone$' $tmp/out && test ! -s $tmp/err && test $(wc -l < $tmp/out) -eq 1; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_monotone_reject_self_intersection
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n1 3\\n3 -1\\n4 4\\n0 4\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'polygon edges must not self-intersect' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
+  )
+  add_test(
+    NAME blend_example_ex13
+    COMMAND bash -c "tmp=$(mktemp -d); cp ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex13/south_america.txt ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex13/ex13.sh $tmp; cd $tmp; BLEND=$<TARGET_FILE:blend> sh ./ex13.sh > run.out 2> run.err; status=$?; grep -q 'monotone: polygon is not xy-monotone' ex13_status.txt && grep -q 'using envelope method' run.err && grep -q 'using best IoU piecewise envelope method' run.err && test -s ex13_monotone_envelope.txt && test -s ex13_monotone_best.txt && test -s ex13_monotone_best_plot.txt; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
     NAME blend_window1d_usage_no_error
     COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window1d > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend window1d - Generate 1-D blending weights' $tmp/out && grep -q '^usage: blend window1d' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
@@ -167,6 +209,10 @@ if(BLEND_BUILD_TESTS)
     blend_window1d_asymmetric
     PROPERTIES
       PASS_REGULAR_EXPRESSION "0 0.345491502813[\r\n]+1 1.000000000000[\r\n]+2 1.000000000000[\r\n]+3 1.000000000000[\r\n]+4 1.000000000000"
+  )
+  add_test(
+    NAME blend_window1d_window_unit_interval
+    COMMAND bash -c "$<TARGET_FILE:blend> window1d -R40/60 -I0.5 -Ftrapezoid -T0.2/0.2 | awk '$2 < -1.0e-12 || $2 > 1.0 + 1.0e-12 {exit 1}'"
   )
   add_test(NAME blend_window1d_arbitrary_region COMMAND blend window1d -R10/14 -I1 --taper_ratio=0.25/0.0 --function=cosine)
   set_tests_properties(
@@ -223,8 +269,81 @@ if(BLEND_BUILD_TESTS)
     NAME blend_window1d_blendfile_ignores_function_taper
     COMMAND bash -c "tmp=$(mktemp -d); printf '1 4 boxcar 0/0\\n' > $tmp/blend.txt; $<TARGET_FILE:blend> window1d -R0/5 -I1 -Ftrapezoid -T0.4 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q -- '-F/--function is ignored' $tmp/err && grep -q -- '-T/--taper_ratio is ignored' $tmp/err && grep -q '1 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
+  add_test(
+    NAME blend_window1d_boxcar_ignores_taper
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window1d -R0/4 -I1 -Fboxcar -T0.2/0.2 > $tmp/out 2> $tmp/err; status=$?; grep -q -- '-T/--taper_ratio is ignored for boxcar windows' $tmp/err && awk '$2 != 1.0 {exit 1}' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window1d_blendfile_boxcar_ignores_taper
+    COMMAND bash -c "tmp=$(mktemp -d); printf '1 4 boxcar 0.2/0.2\\n' > $tmp/blend.txt; $<TARGET_FILE:blend> window1d -R0/5 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q -- 'taper ratios on blendfile line 1 are ignored for boxcar windows' $tmp/err && grep -q '2 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(NAME blend_window1d_reject_output_option COMMAND blend window1d -R0/4 -I1 -Gweights.txt)
+  set_tests_properties(blend_window1d_reject_output_option PROPERTIES WILL_FAIL TRUE)
   add_test(NAME blend_window1d_bad_ratio COMMAND blend window1d -R0/4 -I1 --taper_ratio=0.5)
   set_tests_properties(blend_window1d_bad_ratio PROPERTIES WILL_FAIL TRUE)
+
+  add_test(
+    NAME blend_window2d_usage_no_error
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window2d > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend window2d - Generate 2-D blending weights' $tmp/out && grep -q '^usage: blend window2d' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window2d_boxcar_grid
+    COMMAND bash -c "$<TARGET_FILE:blend> window2d -R0/2/0/2 -I1 -Fboxcar/boxcar -T0/0/0/0 2> /dev/null | awk 'NR != 9 {next} {print} END {if (NR != 9) exit 1}'"
+  )
+  set_tests_properties(
+    blend_window2d_boxcar_grid
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "2 2 1.000000000000"
+  )
+  add_test(
+    NAME blend_window2d_query
+    COMMAND bash -c "printf '1.5 1.5\\n3 3\\n' | $<TARGET_FILE:blend> window2d -R0/2/0/2 -I1 -Fboxcar/boxcar"
+  )
+  set_tests_properties(
+    blend_window2d_query
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "1.5 1.5 1.000000000000[\r\n]+3 3 0.000000000000"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_polygon
+    COMMAND bash -c "tmp=$(mktemp -d); printf '1 1\\n3 1\\n3 3\\n1 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; $<TARGET_FILE:blend> window2d -R0/4/0/4 -I1 -B$tmp/blend.txt > $tmp/out; status=$?; awk '($1==0 && $2==0)||($1==1 && $2==1)||($1==2 && $2==2)||($1==4 && $2==4){print}' $tmp/out; rm -rf $tmp; exit $status"
+  )
+  set_tests_properties(
+    blend_window2d_blendfile_polygon
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "0 0 0.000000000000[\r\n]+1 1 1.000000000000[\r\n]+2 2 1.000000000000[\r\n]+4 4 0.000000000000"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_query
+    COMMAND bash -c "tmp=$(mktemp -d); printf '1 1\\n3 1\\n3 3\\n1 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '2.5 2.5\\n0.5 0.5\\n' | $<TARGET_FILE:blend> window2d -R0/4/0/4 -I1 -B$tmp/blend.txt; status=$?; rm -rf $tmp; exit $status"
+  )
+  set_tests_properties(
+    blend_window2d_blendfile_query
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "2.5 2.5 1.000000000000[\r\n]+0.5 0.5 0.000000000000"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_monotone_envelope
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; using its xy-monotone envelope from -Me' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_best_piecewise_envelope
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5\\n' | $<TARGET_FILE:blend> window2d -R-1/5/0/5 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q '4.5 0.5 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_reject_nonmonotone
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; use -Me' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_ignores_function_taper
+    COMMAND bash -c "tmp=$(mktemp -d); printf '1 1\\n3 1\\n3 3\\n1 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; $<TARGET_FILE:blend> window2d -R0/4/0/4 -I1 -Ftrapezoid/cosine -T0.2/0.2/0.2/0.2 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q -- '-F/--function is ignored' $tmp/err && grep -q -- '-T/--taper_ratio is ignored' $tmp/err && grep -q '2 2 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window2d_boxcar_ignores_taper
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window2d -R0/2/0/2 -I1 -Fboxcar/boxcar -T0.2/0.2/0.2/0.2 > $tmp/out 2> $tmp/err; status=$?; grep -q -- 'taper ratios are ignored for boxcar window dimensions' $tmp/err && awk '$3 != 1.0 {exit 1}' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(NAME blend_window2d_bad_ratio COMMAND blend window2d -R0/2/0/2 -I1 --taper_ratio=0.5/0/0/0)
+  set_tests_properties(blend_window2d_bad_ratio PROPERTIES WILL_FAIL TRUE)
 
 endif()
 

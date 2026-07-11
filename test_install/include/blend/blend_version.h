@@ -1,0 +1,27 @@
+/*
+* Author: Rasheed Ajala
+* Contact: abioyeajala@gmail.com
+*
+*/
+
+#ifndef BLEND_VERSION_H
+#define BLEND_VERSION_H
+
+#define BLEND_PACKAGE_NAME "BLEND"
+#define BLEND_PACKAGE_DESCRIPTION "Function localization using arbitrary support"
+#define BLEND_PACKAGE_VERSION "2.0.0"
+#define BLEND_PACKAGE_VERSION_MAJOR 2
+#define BLEND_PACKAGE_VERSION_MINOR 0
+#define BLEND_PACKAGE_VERSION_PATCH 0
+#define BLEND_PACKAGE_VERSION_STRING "BLEND 2.0.0"
+
+#define BLEND_VERSION "2.0.0"
+#define BLEND_VERSION_MAJOR 2
+#define BLEND_VERSION_MINOR 0
+#define BLEND_VERSION_PATCH 0
+#define BLEND_VERSION_STRING "BLEND 2.0.0"
+
+#define BLEND_LIBRARY_VERSION "2.0.0"
+#define BLEND_LIBRARY_SOVERSION "2"
+
+#endif /* BLEND_VERSION_H */

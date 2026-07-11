@@ -221,6 +221,8 @@ Current examples:
   isotoxal-star support on a 100 by 100 grid to `ex11.txt`.
 - `doc/examples/ex12`: writes a 3D cosine taper over the same 4-pointed
   isotoxal-star support as ex11 on a 100 by 100 by 25 grid to `ex12.txt`.
+- `doc/examples/ex13`: checks a simplified South America polygon with
+  `blend monotone` and writes an xy-monotone envelope to `ex13_monotone.txt`.
 
 Example output gallery:
 
@@ -239,6 +241,10 @@ Example output gallery:
 | ex10 | ex11 | ex12 |
 | --- | --- | --- |
 | ![ex10 decagon cosine taper](doc/examples/ex10/ex10.png) | ![ex11 isotoxal star cosine taper](doc/examples/ex11/ex11.png) | ![ex12 3D isotoxal star cosine taper](doc/examples/ex12/ex12.png) |
+
+| ex13 |
+| --- |
+| ![ex13 South America monotone envelope](doc/examples/ex13/ex13.png) |
 
 ### Using an installed BLEND
 

@@ -18,6 +18,17 @@ static const blend_window_function blend_window_functions[] = {
     WFUNC_TRAPEZOID
 };
 
+static double blend_clamp_unit(double value)
+{
+    if (value < 0.0) {
+        return 0.0;
+    }
+    if (value > 1.0) {
+        return 1.0;
+    }
+    return value;
+}
+
 const char *blend_window_function_name(blend_window_function function)
 {
     switch (function) {
@@ -99,7 +110,7 @@ double cosine(int x, int n, int nmax, int nmin, double r1, double r2)
         value = 0.5 * (1.0 - cos(M_PI * t));
     }
 
-    return value;
+    return blend_clamp_unit(value);
 }
 
 /* trapezoid function */
@@ -130,7 +141,7 @@ double trapezoid(int x, int n, int nmax, int nmin, double r1, double r2)
         value = 2.0 - t;
     }
 
-    return value;
+    return blend_clamp_unit(value);
 }
 
 /* Smoothing function */
@@ -179,5 +190,5 @@ double window_function(int x, int x1, int x2, int n, int nmin,
             return WFUNC_ERROR;
     }
 
-    return taper;
+    return blend_clamp_unit(taper);
 }
