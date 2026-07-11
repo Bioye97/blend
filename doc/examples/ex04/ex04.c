@@ -1,70 +1,52 @@
 #include "blend.h"
 
-static double **alloc_vertices(int rows)
-{
-    int i;
-    double **vertices = (double **)calloc((size_t)rows, sizeof(double *));
-
-    if (vertices == NULL) return NULL;
-
-    for (i = 0; i < rows; i++) {
-        vertices[i] = (double *)calloc(2, sizeof(double));
-        if (vertices[i] == NULL) return NULL;
-    }
-
-    return vertices;
-}
-
-static void free_vertices(double **vertices, int rows)
-{
-    int i;
-
-    if (vertices == NULL) return;
-    for (i = 0; i < rows; i++) {
-        free(vertices[i]);
-    }
-    free(vertices);
-}
-
 int main(void)
 {
     const char *filename = "ex04.txt";
-    window_t data = {0};
-    permuted_vertex_t polygon = {0};
+    window data = {0};
+    permuted_vertex boundary = {0};
+    polygon support = {0};
     FILE *fp;
     int x, y;
 
     data.nx = 100;
     data.ny = 100;
-    data.row_size = 4;
-    data.ratio = 0.2;
-    strcpy(data.x_function, WFUNC_COSINE);
-    strcpy(data.y_function, WFUNC_COSINE);
+    data.ratio_x1 = 0.2;
+    data.ratio_x2 = 0.2;
+    data.ratio_y1 = 0.2;
+    data.ratio_y2 = 0.2;
+    data.ratio_z1 = 0.2;
+    data.ratio_z2 = 0.2;
+    data.x_function = WFUNC_COSINE;
+    data.y_function = WFUNC_COSINE;
 
-    data.vertices = alloc_vertices(data.row_size);
-    if (data.vertices == NULL) {
+    if (blend_polygon_alloc(&support, 4) != SUCCESS) {
         fprintf(stderr, "Could not allocate square vertices.\n");
         return FAIL;
     }
 
-    data.vertices[0][0] = 0;
-    data.vertices[0][1] = 0;
-    data.vertices[1][0] = data.nx - 1;
-    data.vertices[1][1] = 0;
-    data.vertices[2][0] = data.nx - 1;
-    data.vertices[2][1] = data.ny - 1;
-    data.vertices[3][0] = 0;
-    data.vertices[3][1] = data.ny - 1;
+    blend_polygon_set_vertex(&support, 0, 0, 0);
+    blend_polygon_set_vertex(&support, 1, data.nx - 1, 0);
+    blend_polygon_set_vertex(&support, 2, data.nx - 1, data.ny - 1);
+    blend_polygon_set_vertex(&support, 3, 0, data.ny - 1);
 
-    if (boundary_assembly(&data, &polygon) != SUCCESS) {
-        free_vertices(data.vertices, data.row_size);
+    if (blend_window_set_polygon(&data, &support) != SUCCESS) {
+        fprintf(stderr, "Could not assign square vertices.\n");
+        blend_polygon_free(&support);
+        return FAIL;
+    }
+
+    if (boundary_assembly(&data, &boundary) != SUCCESS) {
+        blend_window_clear_polygon(&data);
+        blend_polygon_free(&support);
         return FAIL;
     }
 
     fp = fopen(filename, "w");
     if (fp == NULL) {
         perror(filename);
-        free_vertices(data.vertices, data.row_size);
+        blend_window_clear_polygon(&data);
+        blend_polygon_free(&support);
         return FAIL;
     }
 
@@ -72,7 +54,8 @@ int main(void)
         for (x = 0; x < data.nx; x++) {
             if (embedding_contribution2d(x, y, &data) != SUCCESS) {
                 fclose(fp);
-                free_vertices(data.vertices, data.row_size);
+                blend_window_clear_polygon(&data);
+                blend_polygon_free(&support);
                 return FAIL;
             }
             fprintf(fp, "%d %d %.12f\n", x, y, data.contribution);
@@ -82,11 +65,13 @@ int main(void)
 
     if (fclose(fp) != 0) {
         perror(filename);
-        free_vertices(data.vertices, data.row_size);
+        blend_window_clear_polygon(&data);
+        blend_polygon_free(&support);
         return FAIL;
     }
 
-    free_vertices(data.vertices, data.row_size);
+    blend_window_clear_polygon(&data);
+    blend_polygon_free(&support);
 
     return SUCCESS;
 }

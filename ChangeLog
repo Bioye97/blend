@@ -1,3 +1,29 @@
+2026-07-04  BLEND 2.0.0
+
+	Changes since version 1.1.2:
+
+	* Started the BLEND 2.0.0 development series.
+	* Split window and taper functions from src/blend.c into
+	  src/blend_window.c without changing the public API.
+	* Split contribution evaluation from src/blend.c into
+	  src/blend_contribution.c without changing the public API.
+	* Renamed BLEND-defined typedefs ending in _t to POSIX-compliant names.
+	* Added a configured public version header generated from CMake metadata.
+	* Added public vertex and polygon data structures with ownership helpers.
+	* Updated polygon-based examples to construct support regions with the
+	  polygon API before copying them into the current window internals.
+	* Added the initial GMT-style source layout with a blend command driver
+	  and src module stubs for docs, simplify, monotone, window1d, window2d,
+	  and window3d.
+	* Moved public header sources into src and removed the extra source-tree
+	  include directory.
+	* Replaced string-based window function storage and preprocessor error
+	  code constants with public enum types.
+	* Renamed embedding_contribution to embedding_contribution3d and added
+	  embedding_contribution1d for 1D weights.
+	* Removed one-sided window functions and expanded taper-ratio handling
+	  to separate beginning and ending ratios for each dimension.
+
 2026-07-04  BLEND 1.1.2
 
 	Changes since version 1.0.1:

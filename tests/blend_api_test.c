@@ -1,4 +1,5 @@
 #include "blend.h"
+#include "blend_version.h"
 
 #include <float.h>
 
@@ -61,16 +62,21 @@ static void free_points(double **points, int rows)
     free(points);
 }
 
-static void init_rectangle(window_t *data, int nx, int ny)
+static void init_rectangle(window *data, int nx, int ny)
 {
     data->row_size = 4;
     data->nx = nx;
     data->ny = ny;
     data->nz = 5;
-    data->ratio = 0.2;
-    strcpy(data->x_function, WFUNC_COSINE);
-    strcpy(data->y_function, WFUNC_COSINE);
-    strcpy(data->z_function, WFUNC_COSINE_START);
+    data->ratio_x1 = 0.2;
+    data->ratio_x2 = 0.2;
+    data->ratio_y1 = 0.2;
+    data->ratio_y2 = 0.2;
+    data->ratio_z1 = 0.2;
+    data->ratio_z2 = 0.2;
+    data->x_function = WFUNC_COSINE;
+    data->y_function = WFUNC_COSINE;
+    data->z_function = WFUNC_COSINE;
     data->vertices = alloc_points(data->row_size);
     set_point(data->vertices, 0, 0, 0);
     set_point(data->vertices, 1, nx - 1, 0);
@@ -78,16 +84,21 @@ static void init_rectangle(window_t *data, int nx, int ny)
     set_point(data->vertices, 3, 0, ny - 1);
 }
 
-static void init_hexagon(window_t *data)
+static void init_hexagon(window *data)
 {
     data->row_size = 6;
     data->nx = 10;
     data->ny = 12;
     data->nz = 5;
-    data->ratio = 0.2;
-    strcpy(data->x_function, WFUNC_COSINE);
-    strcpy(data->y_function, WFUNC_COSINE);
-    strcpy(data->z_function, WFUNC_COSINE_START);
+    data->ratio_x1 = 0.2;
+    data->ratio_x2 = 0.2;
+    data->ratio_y1 = 0.2;
+    data->ratio_y2 = 0.2;
+    data->ratio_z1 = 0.2;
+    data->ratio_z2 = 0.2;
+    data->x_function = WFUNC_COSINE;
+    data->y_function = WFUNC_COSINE;
+    data->z_function = WFUNC_COSINE;
     data->vertices = alloc_points(data->row_size);
     set_point(data->vertices, 0, 2, 0);
     set_point(data->vertices, 1, 7, 0);
@@ -97,16 +108,21 @@ static void init_hexagon(window_t *data)
     set_point(data->vertices, 5, 0, 3);
 }
 
-static void init_octagon_with_quadrant_vertices(window_t *data)
+static void init_octagon_with_quadrant_vertices(window *data)
 {
     data->row_size = 12;
     data->nx = 10;
     data->ny = 10;
     data->nz = 5;
-    data->ratio = 0.2;
-    strcpy(data->x_function, WFUNC_COSINE);
-    strcpy(data->y_function, WFUNC_COSINE);
-    strcpy(data->z_function, WFUNC_COSINE_START);
+    data->ratio_x1 = 0.2;
+    data->ratio_x2 = 0.2;
+    data->ratio_y1 = 0.2;
+    data->ratio_y2 = 0.2;
+    data->ratio_z1 = 0.2;
+    data->ratio_z2 = 0.2;
+    data->x_function = WFUNC_COSINE;
+    data->y_function = WFUNC_COSINE;
+    data->z_function = WFUNC_COSINE;
     data->vertices = alloc_points(data->row_size);
     set_point(data->vertices, 0, 3, 0);
     set_point(data->vertices, 1, 6, 0);
@@ -157,50 +173,130 @@ static int test_sorting_and_unique_vertices(void)
     return SUCCESS;
 }
 
+static int test_version_header(void)
+{
+    ASSERT_EQ_INT(BLEND_VERSION_MAJOR, 2);
+    ASSERT_EQ_INT(BLEND_VERSION_MINOR, 0);
+    ASSERT_EQ_INT(BLEND_VERSION_PATCH, 0);
+    ASSERT_TRUE(strcmp(BLEND_VERSION, "2.0.0") == 0);
+    ASSERT_EQ_INT(BLEND_PACKAGE_VERSION_MAJOR, 2);
+    ASSERT_EQ_INT(BLEND_PACKAGE_VERSION_MINOR, 0);
+    ASSERT_EQ_INT(BLEND_PACKAGE_VERSION_PATCH, 0);
+    ASSERT_TRUE(strcmp(BLEND_PACKAGE_VERSION, "2.0.0") == 0);
+    ASSERT_TRUE(strcmp(BLEND_PACKAGE_VERSION_STRING, "BLEND 2.0.0") == 0);
+    ASSERT_TRUE(strcmp(BLEND_VERSION_STRING, "BLEND 2.0.0") == 0);
+    ASSERT_TRUE(strcmp(BLEND_LIBRARY_SOVERSION, "2") == 0);
+
+    return SUCCESS;
+}
+
+static int test_polygon_data_model(void)
+{
+    double **points = alloc_points(3);
+    polygon poly = {0};
+    polygon copy = {0};
+    polygon from_array = {0};
+    window data = {0};
+    vertex point = {0};
+
+    ASSERT_TRUE(points != NULL);
+
+    ASSERT_EQ_INT(blend_polygon_alloc(&poly, 3), SUCCESS);
+    ASSERT_EQ_INT((int)poly.n_vertices, 3);
+    ASSERT_TRUE(poly.vertices != NULL);
+
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&poly, 0, 0.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&poly, 1, 2.0, 0.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&poly, 2, 1.0, 2.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&poly, 3, 1.0, 1.0), FAIL);
+
+    ASSERT_EQ_INT(blend_polygon_get_vertex(&poly, 2, &point), SUCCESS);
+    ASSERT_NEAR(point.x, 1.0, DBL_EPSILON);
+    ASSERT_NEAR(point.y, 2.0, DBL_EPSILON);
+    ASSERT_EQ_INT(blend_polygon_get_vertex(&poly, 3, &point), FAIL);
+
+    ASSERT_EQ_INT(blend_polygon_copy(&poly, &copy), SUCCESS);
+    ASSERT_EQ_INT((int)copy.n_vertices, 3);
+    ASSERT_EQ_INT(blend_polygon_set_vertex(&poly, 2, 5.0, 5.0), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_get_vertex(&copy, 2, &point), SUCCESS);
+    ASSERT_NEAR(point.x, 1.0, DBL_EPSILON);
+    ASSERT_NEAR(point.y, 2.0, DBL_EPSILON);
+
+    set_point(points, 0, 3.0, 4.0);
+    set_point(points, 1, 5.0, 6.0);
+    set_point(points, 2, 7.0, 8.0);
+    ASSERT_EQ_INT(blend_polygon_from_array(&from_array, points, 3), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_get_vertex(&from_array, 1, &point), SUCCESS);
+    ASSERT_NEAR(point.x, 5.0, DBL_EPSILON);
+    ASSERT_NEAR(point.y, 6.0, DBL_EPSILON);
+
+    ASSERT_EQ_INT(blend_window_set_polygon(&data, &copy), SUCCESS);
+    ASSERT_EQ_INT(data.row_size, 3);
+    ASSERT_TRUE(data.vertices != NULL);
+    ASSERT_NEAR(data.vertices[2][0], 1.0, DBL_EPSILON);
+    ASSERT_NEAR(data.vertices[2][1], 2.0, DBL_EPSILON);
+    blend_window_clear_polygon(&data);
+    ASSERT_EQ_INT(data.row_size, 0);
+    ASSERT_TRUE(data.vertices == NULL);
+
+    blend_polygon_free(&poly);
+    blend_polygon_free(&copy);
+    blend_polygon_free(&from_array);
+    free_points(points, 3);
+
+    ASSERT_EQ_INT((int)poly.n_vertices, 0);
+    ASSERT_TRUE(poly.vertices == NULL);
+
+    return SUCCESS;
+}
+
 static int test_window_functions(void)
 {
-    char invalid[MAX_WINDOWFUNC_LEN] = "invalid";
-    char boxcar_name[MAX_WINDOWFUNC_LEN] = WFUNC_BOXCAR;
-    char cosine_name[MAX_WINDOWFUNC_LEN] = WFUNC_COSINE;
-    char scosine_name[MAX_WINDOWFUNC_LEN] = WFUNC_COSINE_START;
-    char ecosine_name[MAX_WINDOWFUNC_LEN] = WFUNC_COSINE_END;
-    char trapezoid_name[MAX_WINDOWFUNC_LEN] = WFUNC_TRAPEZOID;
-    char strapezoid_name[MAX_WINDOWFUNC_LEN] = WFUNC_TRAPEZOID_START;
-    char etrapezoid_name[MAX_WINDOWFUNC_LEN] = WFUNC_TRAPEZOID_END;
+    blend_window_function parsed = WFUNC_INVALID;
 
     ASSERT_NEAR(boxcar(), 1.0, DBL_EPSILON);
     ASSERT_NEAR(cosine(1, 10, 10, 10, 0.2, 0.2), 0.146446609407, 1e-12);
     ASSERT_NEAR(cosine(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
-    ASSERT_NEAR(scosine(1, 10, 10, 10, 0.2), 0.146446609407, 1e-12);
-    ASSERT_NEAR(scosine(5, 10, 10, 10, 0.2), 1.0, DBL_EPSILON);
-    ASSERT_NEAR(ecosine(9, 10, 10, 10, 0.2), 0.853553390593, 1e-12);
-    ASSERT_NEAR(ecosine(5, 10, 10, 10, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(cosine(9, 10, 10, 10, 0.1, 0.2), 0.853553390593, 1e-12);
     ASSERT_NEAR(trapezoid(1, 10, 10, 10, 0.2, 0.2), 0.25, DBL_EPSILON);
     ASSERT_NEAR(trapezoid(5, 10, 10, 10, 0.2, 0.2), 1.0, DBL_EPSILON);
-    ASSERT_NEAR(strapezoid(1, 10, 10, 10, 0.2), 0.25, DBL_EPSILON);
-    ASSERT_NEAR(strapezoid(5, 10, 10, 10, 0.2), 1.0, DBL_EPSILON);
-    ASSERT_NEAR(etrapezoid(9, 10, 10, 10, 0.2), 0.75, DBL_EPSILON);
-    ASSERT_NEAR(etrapezoid(5, 10, 10, 10, 0.2), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(trapezoid(9, 10, 10, 10, 0.1, 0.2), 0.75, DBL_EPSILON);
 
-    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, boxcar_name), 1.0, DBL_EPSILON);
-    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, cosine_name), 1.0, DBL_EPSILON);
-    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, scosine_name), 0.146446609407, 1e-12);
-    ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.2, ecosine_name), 0.853553390593, 1e-12);
-    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, trapezoid_name), 0.25, DBL_EPSILON);
-    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, strapezoid_name), 0.25, DBL_EPSILON);
-    ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.2, etrapezoid_name), 0.75, DBL_EPSILON);
-    ASSERT_NEAR(window_function(0, 1, 10, 10, 10, 0.2, boxcar_name), WFUNC_ERROR, DBL_EPSILON);
-    ASSERT_NEAR(window_function(11, 1, 10, 10, 10, 0.2, boxcar_name), WFUNC_ERROR, DBL_EPSILON);
-    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.5, boxcar_name), WFUNC_ERROR, DBL_EPSILON);
-    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, invalid), WFUNC_ERROR, DBL_EPSILON);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_COSINE), "cosine") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_TRAPEZOID), "trapezoid") == 0);
+    ASSERT_TRUE(strcmp(blend_window_function_name(WFUNC_INVALID), "invalid") == 0);
+    ASSERT_EQ_INT(blend_window_function_from_name("boxcar", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_BOXCAR);
+    ASSERT_EQ_INT(blend_window_function_from_name("cosine", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_COSINE);
+    ASSERT_EQ_INT(blend_window_function_from_name("trapezoid", &parsed), SUCCESS);
+    ASSERT_EQ_INT(parsed, WFUNC_TRAPEZOID);
+    ASSERT_EQ_INT(blend_window_function_from_name("scosine", &parsed), FAIL);
+    ASSERT_EQ_INT(blend_window_function_from_name("ecosine", &parsed), FAIL);
+    ASSERT_EQ_INT(blend_window_function_from_name("strapezoid", &parsed), FAIL);
+    ASSERT_EQ_INT(blend_window_function_from_name("etrapezoid", &parsed), FAIL);
+    ASSERT_EQ_INT(blend_window_function_from_name("invalid", &parsed), FAIL);
+    ASSERT_EQ_INT(parsed, WFUNC_INVALID);
+
+    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.2, WFUNC_BOXCAR), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.2, WFUNC_COSINE), 1.0, DBL_EPSILON);
+    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, 0.1, WFUNC_COSINE), 0.146446609407, 1e-12);
+    ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.1, 0.2, WFUNC_COSINE), 0.853553390593, 1e-12);
+    ASSERT_NEAR(window_function(1, 1, 10, 10, 10, 0.2, 0.1, WFUNC_TRAPEZOID), 0.25, DBL_EPSILON);
+    ASSERT_NEAR(window_function(9, 1, 10, 10, 10, 0.1, 0.2, WFUNC_TRAPEZOID), 0.75, DBL_EPSILON);
+    ASSERT_NEAR(window_function(0, 1, 10, 10, 10, 0.2, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
+    ASSERT_NEAR(window_function(11, 1, 10, 10, 10, 0.2, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
+    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.5, 0.2, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
+    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.5, WFUNC_BOXCAR), WFUNC_ERROR, DBL_EPSILON);
+    ASSERT_NEAR(window_function(5, 1, 10, 10, 10, 0.2, 0.2, WFUNC_INVALID), WFUNC_ERROR, DBL_EPSILON);
 
     return SUCCESS;
 }
 
 static int test_boundary_box_and_assembly_helpers(void)
 {
-    window_t data = {0};
-    permuted_vertex_t vertex = {0};
+    window data = {0};
+    permuted_vertex vertex = {0};
 
     init_rectangle(&data, 5, 4);
 
@@ -239,8 +335,8 @@ static int test_boundary_box_and_assembly_helpers(void)
 
 static int test_assembly_helpers_with_quadrant_vertices(void)
 {
-    window_t data = {0};
-    permuted_vertex_t vertex = {0};
+    window data = {0};
+    permuted_vertex vertex = {0};
 
     init_octagon_with_quadrant_vertices(&data);
 
@@ -307,8 +403,8 @@ static int test_hanging_sweep(void)
 
 static int test_boundary_assembly_and_contribution(void)
 {
-    window_t data = {0};
-    permuted_vertex_t vertex = {0};
+    window data = {0};
+    permuted_vertex vertex = {0};
     int i;
 
     init_rectangle(&data, 5, 4);
@@ -325,9 +421,16 @@ static int test_boundary_assembly_and_contribution(void)
         ASSERT_EQ_INT(data.nny2[i], 3);
     }
 
+    ASSERT_EQ_INT(embedding_contribution1d(2, &data), SUCCESS);
+    ASSERT_NEAR(data.contribution, 1.0, DBL_EPSILON);
+    ASSERT_EQ_INT(embedding_contribution1d(0, &data), SUCCESS);
+    ASSERT_TRUE(data.contribution > 0.0);
+    ASSERT_TRUE(data.contribution < 1.0);
+    ASSERT_EQ_INT(embedding_contribution1d(-1, &data), FAIL);
+
     ASSERT_EQ_INT(embedding_contribution2d(2, 2, &data), SUCCESS);
     ASSERT_NEAR(data.contribution, 1.0, DBL_EPSILON);
-    ASSERT_EQ_INT(embedding_contribution(2, 2, 3, &data), SUCCESS);
+    ASSERT_EQ_INT(embedding_contribution3d(2, 2, 3, &data), SUCCESS);
     ASSERT_NEAR(data.contribution, 1.0, DBL_EPSILON);
 
     ASSERT_EQ_INT(embedding_contribution2d(0, 0, &data), SUCCESS);
@@ -337,10 +440,26 @@ static int test_boundary_assembly_and_contribution(void)
     return SUCCESS;
 }
 
+static int test_linear_interpolation(void)
+{
+    double value;
+
+    ASSERT_EQ_INT(interpolate_linear(0.0, 2.0, 10.0, 12.0, 2.5, &value), SUCCESS);
+    ASSERT_NEAR(value, 4.5, DBL_EPSILON);
+
+    ASSERT_EQ_INT(interpolate_linear(10.0, 12.0, 0.0, 2.0, 2.5, &value), SUCCESS);
+    ASSERT_NEAR(value, 4.5, DBL_EPSILON);
+
+    ASSERT_EQ_INT(interpolate_linear(1.0, 2.0, 1.0, 4.0, 1.0, &value), FAIL);
+    ASSERT_EQ_INT(interpolate_linear(0.0, 2.0, 1.0, 4.0, 0.5, NULL), FAIL);
+
+    return SUCCESS;
+}
+
 static int test_step_vector_functions(void)
 {
-    window_t data = {0};
-    permuted_vertex_t vertex = {0};
+    window data = {0};
+    permuted_vertex vertex = {0};
     int i;
 
     init_hexagon(&data);
@@ -376,12 +495,15 @@ static int test_step_vector_functions(void)
 
 int main(void)
 {
+    ASSERT_EQ_INT(test_version_header(), SUCCESS);
+    ASSERT_EQ_INT(test_polygon_data_model(), SUCCESS);
     ASSERT_EQ_INT(test_sorting_and_unique_vertices(), SUCCESS);
     ASSERT_EQ_INT(test_window_functions(), SUCCESS);
     ASSERT_EQ_INT(test_boundary_box_and_assembly_helpers(), SUCCESS);
     ASSERT_EQ_INT(test_assembly_helpers_with_quadrant_vertices(), SUCCESS);
     ASSERT_EQ_INT(test_hanging_sweep(), SUCCESS);
     ASSERT_EQ_INT(test_boundary_assembly_and_contribution(), SUCCESS);
+    ASSERT_EQ_INT(test_linear_interpolation(), SUCCESS);
     ASSERT_EQ_INT(test_step_vector_functions(), SUCCESS);
 
     return SUCCESS;

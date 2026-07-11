@@ -105,6 +105,20 @@ This installs the BLEND libraries, public header, and CMake package files to the
 location set by `CMAKE_INSTALL_PREFIX` in `cmake/ConfigUser.cmake`. Depending on
 the installation location, you may need write permission for this step.
 
+After installation, make sure the installation `bin` directory is in your
+shell search path. If `CMAKE_INSTALL_PREFIX` is set to `/path/to/blend/install`,
+add this to your shell startup file:
+
+```sh
+export PATH="/path/to/blend/install/bin:$PATH"
+```
+
+Then open a new terminal, or reload the startup file, and check the command:
+
+```sh
+blend --version
+```
+
 ### Updating an existing installation
 
 If BLEND was already installed and you want to update to the latest version

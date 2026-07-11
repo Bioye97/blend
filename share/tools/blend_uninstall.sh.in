@@ -80,10 +80,13 @@ while [ "$#" -gt 0 ]; do
 done
 
 libdir="${prefix}/@BLEND_INSTALL_LIBDIR@"
+bindir="${prefix}/@BLEND_INSTALL_BINDIR@"
 includedir="${prefix}/@BLEND_INSTALL_INCLUDEDIR@"
 cmakedir="${prefix}/@BLEND_INSTALL_CMAKEDIR@"
 docdir="${prefix}/@BLEND_INSTALL_DOCDIR@"
 tooldir="${prefix}/@CMAKE_INSTALL_DATADIR@/tools"
+
+remove_path "${bindir}/blend"
 
 remove_path "${libdir}/libblend.a"
 remove_path "${libdir}/libblend.dylib"
@@ -94,6 +97,8 @@ remove_path "${libdir}/libblend.so.@BLEND_LIB_SOVERSION@"
 remove_path "${libdir}/libblend.so.@BLEND_LIB_VERSION@"
 
 remove_path "${includedir}/blend.h"
+remove_path "${includedir}/blend_polygon.h"
+remove_path "${includedir}/blend_version.h"
 
 remove_path "${cmakedir}/blend-config.cmake"
 remove_path "${cmakedir}/blend-config-version.cmake"
@@ -128,6 +133,7 @@ remove_empty_dir_tree "${docdir}"
 remove_empty_dir_tree "${includedir}"
 remove_empty_dir_tree "${cmakedir}"
 remove_empty_dir_tree "${libdir}"
+remove_empty_dir_tree "${bindir}"
 remove_empty_dir_tree "${tooldir}"
 
 if [ "${dry_run}" -eq 1 ]; then

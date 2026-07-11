@@ -1,76 +1,56 @@
 #include "blend.h"
 
-static double **alloc_vertices(int rows)
-{
-    int i;
-    double **vertices = (double **)calloc((size_t)rows, sizeof(double *));
-
-    if (vertices == NULL) return NULL;
-
-    for (i = 0; i < rows; i++) {
-        vertices[i] = (double *)calloc(2, sizeof(double));
-        if (vertices[i] == NULL) return NULL;
-    }
-
-    return vertices;
-}
-
-static void free_vertices(double **vertices, int rows)
-{
-    int i;
-
-    if (vertices == NULL) return;
-    for (i = 0; i < rows; i++) {
-        free(vertices[i]);
-    }
-    free(vertices);
-}
-
-static void set_vertex(window_t *data, int row, double x, double y)
-{
-    data->vertices[row][0] = x;
-    data->vertices[row][1] = y;
-}
-
 int main(void)
 {
     const char *filename = "ex11.txt";
-    window_t data = {0};
-    permuted_vertex_t polygon = {0};
+    window data = {0};
+    permuted_vertex boundary = {0};
+    polygon support = {0};
     FILE *fp;
     int x, y;
 
     data.nx = 100;
     data.ny = 100;
-    data.row_size = 8;
-    data.ratio = 0.2;
-    strcpy(data.x_function, WFUNC_COSINE);
-    strcpy(data.y_function, WFUNC_COSINE);
+    data.ratio_x1 = 0.2;
+    data.ratio_x2 = 0.2;
+    data.ratio_y1 = 0.2;
+    data.ratio_y2 = 0.2;
+    data.ratio_z1 = 0.2;
+    data.ratio_z2 = 0.2;
+    data.x_function = WFUNC_COSINE;
+    data.y_function = WFUNC_COSINE;
 
-    data.vertices = alloc_vertices(data.row_size);
-    if (data.vertices == NULL) {
+    if (blend_polygon_alloc(&support, 8) != SUCCESS) {
         fprintf(stderr, "Could not allocate isotoxal-star vertices.\n");
         return FAIL;
     }
 
-    set_vertex(&data, 0, 50, 0);
-    set_vertex(&data, 1, 65, 35);
-    set_vertex(&data, 2, 99, 50);
-    set_vertex(&data, 3, 65, 65);
-    set_vertex(&data, 4, 50, 99);
-    set_vertex(&data, 5, 35, 65);
-    set_vertex(&data, 6, 0, 50);
-    set_vertex(&data, 7, 35, 35);
+    blend_polygon_set_vertex(&support, 0, 50, 0);
+    blend_polygon_set_vertex(&support, 1, 65, 35);
+    blend_polygon_set_vertex(&support, 2, 99, 50);
+    blend_polygon_set_vertex(&support, 3, 65, 65);
+    blend_polygon_set_vertex(&support, 4, 50, 99);
+    blend_polygon_set_vertex(&support, 5, 35, 65);
+    blend_polygon_set_vertex(&support, 6, 0, 50);
+    blend_polygon_set_vertex(&support, 7, 35, 35);
 
-    if (boundary_assembly(&data, &polygon) != SUCCESS) {
-        free_vertices(data.vertices, data.row_size);
+    if (blend_window_set_polygon(&data, &support) != SUCCESS) {
+        fprintf(stderr, "Could not assign isotoxal-star vertices.\n");
+        blend_polygon_free(&support);
+        return FAIL;
+    }
+
+    if (boundary_assembly(&data, &boundary) != SUCCESS) {
+        blend_window_clear_polygon(&data);
+        blend_polygon_free(&support);
         return FAIL;
     }
 
     fp = fopen(filename, "w");
     if (fp == NULL) {
         perror(filename);
-        free_vertices(data.vertices, data.row_size);
+        blend_window_clear_polygon(&data);
+        blend_polygon_free(&support);
         return FAIL;
     }
 
@@ -78,7 +58,8 @@ int main(void)
         for (x = 0; x < data.nx; x++) {
             if (embedding_contribution2d(x, y, &data) != SUCCESS) {
                 fclose(fp);
-                free_vertices(data.vertices, data.row_size);
+                blend_window_clear_polygon(&data);
+                blend_polygon_free(&support);
                 return FAIL;
             }
             fprintf(fp, "%d %d %.12f\n", x, y, data.contribution);
@@ -88,11 +69,13 @@ int main(void)
 
     if (fclose(fp) != 0) {
         perror(filename);
-        free_vertices(data.vertices, data.row_size);
+        blend_window_clear_polygon(&data);
+        blend_polygon_free(&support);
         return FAIL;
     }
 
-    free_vertices(data.vertices, data.row_size);
+    blend_window_clear_polygon(&data);
+    blend_polygon_free(&support);
 
     return SUCCESS;
 }

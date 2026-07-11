@@ -82,7 +82,8 @@ From the repository root:
 
 ```sh
 EX=ex01
-cc ./doc/examples/${EX}/${EX}.c src/blend.c -I src -o ./doc/examples/${EX}/${EX} -lm
+BLEND_SOURCES="src/blend_boundary.c src/blend_contribution.c src/blend_polygon.c src/blend_window.c"
+cc ./doc/examples/${EX}/${EX}.c ${BLEND_SOURCES} -I src -o ./doc/examples/${EX}/${EX} -lm
 ```
 
 Then run it:
