@@ -57,13 +57,21 @@ Make a 2-D window using a support/polygon defined in the `polygon.txt` file:
 ```sh
 printf "1 1\n4 1\n4 4\n1 4\n" > polygon.txt
 printf "polygon.txt cosine/cosine 0.2/0.2/0.2/0.2\n" > supports.txt
-blend window2d -R0/5/0/5 -I1 -Bsupports.txt
+blend window2d -R0/5/0/5 -I0.5 -Bsupports.txt
 ```
 
-Assuming the polygon is not xy-monotone, let BLEND refine the support:
+Make a 3-D window using a support/polygon defined in the `polygon.txt` file:
 
 ```sh
-blend window2d -R0/5/0/5 -I1 -Bsupports.txt -Mb
+printf "1 1\n4 1\n4 4\n1 4\n" > polygon.txt
+printf "polygon.txt 1 3 cosine/cosine/cosine 0.2/0.2/0.2/0.2/0.2/0.2\n" > supports.txt
+blend window3d -R0/5/0/5/0/5 -I0.5 -Bsupports.txt
+```
+
+Check if a polygon is xy-monotone and make it so if it is not:
+
+```sh
+blend monotone polygon.txt -Mb 
 ```
 
 ### Uninstalling
