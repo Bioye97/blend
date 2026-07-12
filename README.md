@@ -69,7 +69,7 @@ Check if a support/polygon is xy-monotone and make it so if it is not:
 blend monotone polygon.txt -Mb 
 ```
 
-### Uninstalling
+## Uninstalling
 
 The install step also installs an uninstall helper. Run it from the
 installation prefix:
