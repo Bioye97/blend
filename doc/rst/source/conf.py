@@ -35,4 +35,5 @@ latex_documents = [
 latex_elements = {
     "papersize": "letterpaper",
     "pointsize": "10pt",
+    "fontpkg": "",
 }
