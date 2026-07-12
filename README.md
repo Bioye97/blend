@@ -41,13 +41,13 @@ Make a 1-D cosine window:
 blend window1d -R0/10 -I1 -Fcosine -T0.2/0.2
 ```
 
-Query a 1-D window at an arbitrary location:
+Query a 1-D cosine window at an arbitrary location:
 
 ```sh
 printf "2.5\n" | blend window1d -R0/10 -I1 -Fcosine -T0.2/0.2
 ```
 
-Make a 2-D window using a support/polygon defined in the `polygon.txt` file:
+Make a 2-D cosine window using a support/polygon defined in the `polygon.txt` file:
 
 ```sh
 printf "1 1\n4 1\n4 4\n1 4\n" > polygon.txt
@@ -55,7 +55,7 @@ printf "polygon.txt cosine/cosine 0.2/0.2/0.2/0.2\n" > supports.txt
 blend window2d -R0/5/0/5 -I0.5 -Bsupports.txt
 ```
 
-Make a 3-D window using a support/polygon defined in the `polygon.txt` file:
+Make a 3-D cosine window using a support/polygon defined in the `polygon.txt` file:
 
 ```sh
 printf "1 1\n4 1\n4 4\n1 4\n" > polygon.txt
