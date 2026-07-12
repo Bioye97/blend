@@ -7,6 +7,10 @@ cmake/ConfigUserAdvanced.cmake
 # Build and local install directories
 build/
 
+# Generated documentation
+doc/html/
+doc/latex/
+
 # Compiled objects and libraries
 *.o
 *.a
