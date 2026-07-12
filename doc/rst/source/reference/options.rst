@@ -26,5 +26,8 @@ Common Options
 ``-M``
    Monotone conversion method for non-xy-monotone polygons.
 
+``-N``
+   Write polygons modified by ``-M`` to ``<polygonfile>_monotone``.
+
 ``-V``
    Verbosity. Levels are ``q``, ``e``, ``w``, ``t``, ``i``, ``c``, and ``d``.

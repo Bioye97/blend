@@ -352,7 +352,11 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window2d_blendfile_monotone_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; using its xy-monotone envelope from -Me' $tmp/err && grep -q 'original number of vertices = 8, final number of vertices = 4' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; using its xy-monotone envelope from -Me' $tmp/err && grep -q 'original number of vertices = 8, final number of vertices = 4' $tmp/err && grep -q 'modified polygon for .* will not be written; use -N to write it' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window2d_blendfile_write_monotone_polygon
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -N -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; test -s $tmp/poly.txt_monotone && grep -q 'wrote modified xy-monotone polygon to' $tmp/err && $<TARGET_FILE:blend> monotone $tmp/poly.txt_monotone | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window2d_blendfile_best_piecewise_envelope
@@ -406,7 +410,11 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window3d_blendfile_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q 'modified polygon for .* will not be written; use -N to write it' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window3d_blendfile_write_monotone_polygon
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5 1\\n' | $<TARGET_FILE:blend> window3d -R0/3/0/3/0/2 -I1 -Me -N -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; test -s $tmp/poly.txt_monotone && grep -q 'wrote modified xy-monotone polygon to' $tmp/err && $<TARGET_FILE:blend> monotone $tmp/poly.txt_monotone | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window3d_blendfile_reject_nonmonotone

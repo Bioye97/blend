@@ -8,9 +8,11 @@ Full documentation: [https://bioye97.github.io/blend/](https://bioye97.github.io
 
 ## Building and installation
 
-BLEND uses CMake. A typical build is:
+Download the source and build with CMake:
 
 ```sh
+git clone https://github.com/Bioye97/blend.git
+cd blend
 cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
 mkdir build
 cd build

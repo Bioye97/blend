@@ -6,6 +6,7 @@ Dependencies
 
 To build BLEND, install:
 
+* Git, to download the source repository
 * CMake 3.15 or newer
 * A C compiler
 * A POSIX shell
@@ -49,6 +50,19 @@ that environment:
 
 The important point is that ``sphinx-build`` and ``sphinx-rtd-theme`` must come
 from the same Python environment.
+
+Download BLEND
+--------------
+
+Download the source from GitHub:
+
+.. code-block:: sh
+
+   git clone https://github.com/Bioye97/blend.git
+   cd blend
+
+To update an existing source tree later, run ``git pull`` from the BLEND source
+directory.
 
 Configuration
 -------------

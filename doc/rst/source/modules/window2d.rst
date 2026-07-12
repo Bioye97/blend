@@ -9,7 +9,7 @@ Synopsis
    blend window2d -R<xmin>/<xmax>/<ymin>/<ymax> -I<dx>[/<dy>]
                   [-F<xfunction>[/<yfunction>]]
                   [-T<rx1>/<rx2>/<ry1>/<ry2>]
-                  [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-M<method>]
+                  [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-M<method>] [-N]
 
 Description
 -----------
@@ -25,7 +25,8 @@ Blendfile rows contain:
 
 Polygons must be valid, simple, and xy-monotone. If a polygon is not
 xy-monotone, use ``-Me`` or ``-Mb`` to refine it. BLEND reports the original
-and final vertex counts when refinement changes the polygon.
+and final vertex counts when refinement changes the polygon. Use ``-N`` with
+``-M`` to write each modified polygon to ``<polygonfile>_monotone``.
 
 Options
 -------
@@ -50,3 +51,6 @@ Options
 
 ``-M``
    Convert non-xy-monotone polygons using ``e`` or ``b``.
+
+``-N``
+   Write modified polygons from ``-M`` to ``<polygonfile>_monotone``.

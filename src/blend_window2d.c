@@ -35,6 +35,7 @@ typedef struct window2d_options {
     int has_function;
     int has_taper;
     int has_monotone_method;
+    int has_write_monotone;
     blend_window_function x_function;
     blend_window_function y_function;
     const char *blendfile;
@@ -63,7 +64,7 @@ static void window2d_usage(FILE *fp)
     fprintf(fp, "blend window2d - Generate 2-D blending weights\n\n");
     fprintf(fp, "usage: blend window2d -R<xmin>/<xmax>/<ymin>/<ymax> -I<dx>[/<dy>]\n");
     fprintf(fp, "       [-F<xfunction>[/<yfunction>]] [-T<rx1>/<rx2>/<ry1>/<ry2>]\n");
-    fprintf(fp, "       [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-M<method>] [-V[q|e|w|t|i|c|d]]\n\n");
+    fprintf(fp, "       [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-M<method>] [-N] [-V[q|e|w|t|i|c|d]]\n\n");
 
     fprintf(fp, "Generate 2-D blending weights and write three columns: x y weight. If x/y\n");
     fprintf(fp, "query coordinates are provided on standard input, weights are returned at those\n");
@@ -118,6 +119,11 @@ static void window2d_usage(FILE *fp)
     fprintf(fp, "       e  Use the xy-monotone envelope method.\n");
     fprintf(fp, "       b  Use the highest-IoU piecewise envelope from both traversal directions,\n");
     fprintf(fp, "          sampled on the -R/-I grid.\n\n");
+
+    fprintf(fp, "  -N, --write-monotone\n");
+    fprintf(fp, "     When -M modifies a polygon, write the modified polygon to a file named\n");
+    fprintf(fp, "     <polygonfile>_monotone. If -N is omitted, modified polygons are used for\n");
+    fprintf(fp, "     weights but are not written.\n\n");
 
     fprintf(fp, "  -V[level], --verbose=<level>\n");
     fprintf(fp, "     Select verbosity level [w]. Choose among q, e, w, t, i, c, and d.\n\n");
@@ -478,6 +484,9 @@ static int window2d_parse_options(int argc, char **argv, window2d_options *optio
         else if (strncmp(arg, "--monotone=", 11) == 0) {
             if (window2d_parse_monotone_method(arg + 11, options) != SUCCESS) return FAIL;
         }
+        else if (strcmp(arg, "-N") == 0 || strcmp(arg, "--write-monotone") == 0) {
+            options->has_write_monotone = 1;
+        }
         else {
             BLEND_Report(BLEND_MSG_ERROR, "window2d: unknown option: %s\n", arg);
             return FAIL;
@@ -510,6 +519,9 @@ static int window2d_parse_options(int argc, char **argv, window2d_options *optio
     }
     if (options->blendfile == NULL && options->has_monotone_method) {
         BLEND_Report(BLEND_MSG_WARNING, "window2d: -M/--monotone is ignored unless -B/--blendfile is given\n");
+    }
+    if (options->has_write_monotone && (options->blendfile == NULL || !options->has_monotone_method)) {
+        BLEND_Report(BLEND_MSG_WARNING, "window2d: -N/--write-monotone is ignored unless -B/--blendfile and -M/--monotone are given\n");
     }
 
     if (window2d_adjust_axis("x", options->xmin, &options->xmax, options->dx, &options->nx) != SUCCESS) {
@@ -600,6 +612,34 @@ static int window2d_support_grid_size(double min, double max, double increment, 
     }
 
     *n = (int)intervals + 1;
+    return SUCCESS;
+}
+
+static int window2d_monotone_output_path(const char *polygon_file, char *path, size_t path_size)
+{
+    int n;
+
+    n = snprintf(path, path_size, "%s_monotone", polygon_file);
+    if (n < 0 || (size_t)n >= path_size) {
+        BLEND_Report(BLEND_MSG_ERROR, "window2d: monotone polygon output path is too long for %s\n", polygon_file);
+        return FAIL;
+    }
+
+    return SUCCESS;
+}
+
+static int window2d_write_monotone_polygon(const char *polygon_file, const polygon *poly)
+{
+    char path[PATH_MAX];
+
+    if (window2d_monotone_output_path(polygon_file, path, sizeof(path)) != SUCCESS) {
+        return FAIL;
+    }
+    if (blend_polygon_write(path, poly) != SUCCESS) {
+        return FAIL;
+    }
+
+    BLEND_Report(BLEND_MSG_WARNING, "window2d: wrote modified xy-monotone polygon to %s\n", path);
     return SUCCESS;
 }
 
@@ -793,6 +833,18 @@ static int window2d_parse_blendfile_line(const char *line, long line_number,
         BLEND_Report(BLEND_MSG_WARNING,
                      "%s: original number of vertices = %zu, final number of vertices = %zu.\n",
                      polygon_file, input_polygon.n_vertices, support_polygon.n_vertices);
+        if (options->has_write_monotone) {
+            if (window2d_write_monotone_polygon(polygon_file, &support_polygon) != SUCCESS) {
+                blend_polygon_free(&input_polygon);
+                blend_polygon_free(&support_polygon);
+                return FAIL;
+            }
+        }
+        else {
+            BLEND_Report(BLEND_MSG_WARNING,
+                         "window2d: modified polygon for %s will not be written; use -N to write it\n",
+                         polygon_file);
+        }
     }
 
     status = window2d_build_support(options, polygon_file, support_polygon.vertices, support_polygon.n_vertices,

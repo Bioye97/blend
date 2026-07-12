@@ -4,11 +4,13 @@ Quick Start
 Build and install BLEND
 -----------------------
 
-BLEND uses CMake configuration files in the ``cmake`` directory. Copy the user
-template once, edit it, and configure from a separate build directory:
+Download the source, copy the user configuration template once, edit it if
+needed, and configure from a separate build directory:
 
 .. code-block:: sh
 
+   git clone https://github.com/Bioye97/blend.git
+   cd blend
    cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
    mkdir build
    cd build
