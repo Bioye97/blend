@@ -109,3 +109,6 @@ If you use BLEND in your work, please cite the following references:
    multiple scales](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales).
    In `Seismological Society of America Annual Meeting`, Baltimore, Maryland,
    USA, vol. 96, p. 1364.
+
+## Acknowledgment
+The BLEND package design is inspired by the [Generic Mapping Tools (GMT)](https://www.generic-mapping-tools.org/) and was funded by [NSF](https://www.nsf.gov).
