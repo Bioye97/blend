@@ -2,10 +2,10 @@ Window Functions
 ================
 
 BLEND window functions are point evaluators. A function is evaluated at the
-requested grid point or interpolation neighbor; BLEND does not need to build an
-entire window array before answering a query.
+requested grid point or interpolation neighbor; BLEND does not need to build
+an entire window array before responding to a query.
 
-Available names
+Available Names
 ---------------
 
 Run:
@@ -14,17 +14,72 @@ Run:
 
    blend --show-windows
 
-Current names include ``boxcar``, ``cosine``, ``trapezoid``, ``hamming``,
-``blackman``, ``blackmanharris``, ``welch``, ``parzen``, ``gaussian``,
-``smoothstep``, ``smootherstep``, ``exponential``, ``sine``, ``bohman``,
-``nuttall``, ``kaiser``, ``cauchy``, ``quadratic``, ``cubic``, ``poisson``,
-``bartlett``, ``barthann``, ``exactblackman``, ``blackmannuttall``,
-``flattop``, ``lanczos``, ``riesz``, ``riemann``, ``fejer``, ``connes``,
-``hanningpoisson``, ``kaiserbessel``, ``plancktaper``, ``quartic``,
-``quintic``, ``septic``, ``nonic``, ``logistic``, ``tanh``, ``erf``,
-``arctan``, ``gompertz``, ``softsign``, ``agnesi``, ``inversequadratic``,
-``inversemultiquadric``, ``powerlaw``, ``root``, ``circular``, ``sech``,
-``sech2``, ``student``, and ``laplace``.
+Each page below shows the ``window1d`` command used to generate the
+example for that window function.
+
+Available Window Functions
+--------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   windows/boxcar
+   windows/cosine
+   windows/hann
+   windows/tukey
+   windows/trapezoid
+   windows/linear
+   windows/hamming
+   windows/blackman
+   windows/blackmanharris
+   windows/welch
+   windows/parzen
+   windows/gaussian
+   windows/smoothstep
+   windows/smootherstep
+   windows/exponential
+   windows/sine
+   windows/bohman
+   windows/nuttall
+   windows/kaiser
+   windows/cauchy
+   windows/quadratic
+   windows/cubic
+   windows/poisson
+   windows/bartlett
+   windows/barthann
+   windows/bartletthann
+   windows/exactblackman
+   windows/blackmannuttall
+   windows/flattop
+   windows/lanczos
+   windows/riesz
+   windows/riemann
+   windows/fejer
+   windows/connes
+   windows/hanningpoisson
+   windows/kaiserbessel
+   windows/plancktaper
+   windows/quartic
+   windows/quintic
+   windows/septic
+   windows/nonic
+   windows/logistic
+   windows/tanh
+   windows/erf
+   windows/arctan
+   windows/gompertz
+   windows/softsign
+   windows/agnesi
+   windows/inversequadratic
+   windows/inversemultiquadric
+   windows/powerlaw
+   windows/root
+   windows/circular
+   windows/sech
+   windows/sech2
+   windows/student
+   windows/laplace
 
 Aliases
 -------

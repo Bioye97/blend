@@ -60,16 +60,14 @@ static void window1d_usage(FILE *fp)
     fprintf(fp, "REQUIRED ARGUMENTS:\n\n");
     fprintf(fp, "  -R<xmin>/<xmax>, --region=<xmin>/<xmax>\n");
     fprintf(fp, "     Specify the full 1-D output domain in user coordinates. The domain must\n");
-    fprintf(fp, "     satisfy xmin < xmax. Internally, the domain is represented by zero-based\n");
-    fprintf(fp, "     grid indices 0, 1, ..., nx-1, but output always uses user coordinates.\n");
-    fprintf(fp, "     If xmax does not fall exactly on the -I increment, BLEND adjusts xmax\n");
-    fprintf(fp, "     upward to the next increment and reports a warning at the default\n");
-    fprintf(fp, "     verbosity level.\n\n");
+    fprintf(fp, "     satisfy xmin < xmax. If xmax does not fall exactly on the -I increment,\n");
+    fprintf(fp, "     BLEND adjusts xmax upward to the next increment and reports a warning\n");
+    fprintf(fp, "     at the default verbosity level.\n\n");
 
     fprintf(fp, "  -I<dx>, --increment=<dx>\n");
     fprintf(fp, "     Specify the grid increment in user coordinates. The increment must be\n");
     fprintf(fp, "     positive. For example, -R10/14 -I0.1 creates real coordinates\n");
-    fprintf(fp, "     10, 10.1, 10.2, ..., 14 and internal indices 0, 1, 2, ..., 40.\n\n");
+    fprintf(fp, "     10, 10.1, 10.2, ..., 14.\n\n");
 
     fprintf(fp, "OPTIONAL ARGUMENTS:\n\n");
     fprintf(fp, "  -F<function>, --function=<function>\n");
@@ -95,7 +93,7 @@ static void window1d_usage(FILE *fp)
     fprintf(fp, "     comments introduced by '#'. Taper ratios are ignored for boxcar windows.\n");
     fprintf(fp, "     Example row for -R0/10:\n");
     fprintf(fp, "       2 3 cosine 0.2/0.2\n");
-    fprintf(fp, "     Grid points not covered by any blendfile interval receive weight 0.\n\n");
+    fprintf(fp, "     Grid points not covered by any blendfile interval within -R receive weight 0.\n\n");
 
     fprintf(fp, "  -C<f|l|o|u|a|g|p>, --clobber=<mode>\n");
     fprintf(fp, "     Select how overlapping interval weights from -B are combined [Default is p].\n");
@@ -955,14 +953,26 @@ int blend_window1d_module(int argc, char **argv)
     window1d_init_window(&data, &options);
 
     if (options.blendfile != NULL) {
+        double start = blend_elapsed_seconds();
+
         if (window1d_read_blendfile(&options, &supports) != SUCCESS) {
             return FAIL;
         }
         support_list = &supports;
+        BLEND_Report(BLEND_MSG_TIMING,
+                     "window1d: read %zu blendfile intervals in %.3f s\n",
+                     supports.count, blend_elapsed_seconds() - start);
     }
 
     if (!isatty(STDIN_FILENO)) {
+        double start = blend_elapsed_seconds();
+
         status = window1d_write_queries(stdout, &options, &data, support_list, &n_queries);
+        if (status == SUCCESS && n_queries > 0) {
+            BLEND_Report(BLEND_MSG_TIMING,
+                         "window1d: evaluated %d query points in %.3f s\n",
+                         n_queries, blend_elapsed_seconds() - start);
+        }
         if (status != SUCCESS) {
             window1d_support_list_free(&supports);
             return FAIL;
@@ -970,7 +980,17 @@ int blend_window1d_module(int argc, char **argv)
     }
 
     if (n_queries == 0) {
+        double start = blend_elapsed_seconds();
+
+        BLEND_Report(BLEND_MSG_TIMING,
+                     "window1d: writing %d grid nodes\n",
+                     options.nx);
         status = window1d_write_grid(stdout, &options, &data, support_list);
+        if (status == SUCCESS) {
+            BLEND_Report(BLEND_MSG_TIMING,
+                         "window1d: wrote %d grid nodes in %.3f s\n",
+                         options.nx, blend_elapsed_seconds() - start);
+        }
         if (status != SUCCESS) {
             window1d_support_list_free(&supports);
             return FAIL;

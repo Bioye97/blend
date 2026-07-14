@@ -1,13 +1,6 @@
 monotone
 ========
 
-Synopsis
---------
-
-.. code-block:: text
-
-   blend monotone [<polygonfile>] [-M<method>] [-G<nx>[/<ny>]] [-V[q|e|w|t|i|c|d]]
-
 Description
 -----------
 
@@ -20,24 +13,13 @@ Without ``-M``, the module reports whether the polygon is xy-monotone. With
 Messages, including the original and final vertex counts, are written to
 standard error.
 
-Options
--------
+Usage
+-----
 
-``-M<method>``, ``--monotone=<method>``
-   Modify non-xy-monotone polygons. ``-Me`` uses the envelope method. ``-Mb``
-   uses the highest-IoU piecewise envelope from both traversal directions.
+.. raw:: html
 
-``-G<nx>[/<ny>]``, ``--grid=<nx>[/<ny>]``
-   Set the sampling grid used by ``-Mb``. If ``ny`` is omitted, ``ny = nx``.
-   The default is ``256/256``.
+   <span id="m"></span>
+   <span id="g"></span>
+   <span id="v"></span>
 
-``-V[level]``
-   Set verbosity.
-
-Examples
---------
-
-.. code-block:: sh
-
-   blend monotone polygon.txt
-   blend monotone polygon.txt -Mb -G512/512 > polygon_monotone.txt
+.. blend-usage:: monotone

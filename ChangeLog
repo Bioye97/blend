@@ -18,6 +18,9 @@
 	  include directory.
 	* Replaced string-based window function storage and preprocessor error
 	  code constants with public enum types.
+	* Added runtime diagnostics at the -Vt verbosity level for grid output,
+	  streamed queries, blendfile support preparation, and best-IoU monotone
+	  conversion.
 	* Renamed embedding_contribution to embedding_contribution3d and added
 	  embedding_contribution1d for 1D weights.
 	* Removed one-sided window functions and expanded taper-ratio handling
@@ -43,7 +46,7 @@
 	* Registered the API test with CTest via BLEND_BUILD_TESTS.
 	* Licensed BLEND under the GNU Lesser General Public License version 3
 	  or any later version.
-	* Added LGPLv3 and GPLv3 license texts as COPYING.LESSER and COPYING.
+	* Added LGPLv3 and GPLv3 license texts as COPYING.LESSERv3 and COPYINGv3.
 	* Installed license files with the package documentation.
 	* Added share/tools/blend_uninstall.sh to remove installed BLEND files.
 	* Added doc/examples/ex01 with a cosine taper window example and

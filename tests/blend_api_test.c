@@ -321,9 +321,11 @@ static int test_polygon_api_functions(void)
     polygon u_shape = {0};
     polygon monotone_exact = {0};
     polygon monotone_envelope = {0};
+    polygon strict_envelope = {0};
     polygon piecewise_input = {0};
     polygon full_envelope = {0};
     polygon best_envelope = {0};
+    polygon strict_best_envelope = {0};
     polygon reversed_input = {0};
     polygon reversed_best = {0};
     polygon bowtie = {0};
@@ -370,6 +372,8 @@ static int test_polygon_api_functions(void)
 
     ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&square, &flag), SUCCESS);
     ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone_strict(&square, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
     ASSERT_EQ_INT(blend_polygon_is_simple(&square, &flag), SUCCESS);
     ASSERT_EQ_INT(flag, 1);
     ASSERT_EQ_INT(blend_polygon_xy_monotone_envelope(&square, &monotone_exact), SUCCESS);
@@ -389,9 +393,15 @@ static int test_polygon_api_functions(void)
     ASSERT_EQ_INT(blend_polygon_set_vertex(&u_shape, 7, 0.0, 3.0), SUCCESS);
     ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&u_shape, &flag), SUCCESS);
     ASSERT_EQ_INT(flag, 0);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone_strict(&u_shape, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 0);
     ASSERT_EQ_INT(blend_polygon_xy_monotone_envelope(&u_shape, &monotone_envelope), SUCCESS);
     ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&monotone_envelope, &flag), SUCCESS);
     ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_envelope_strict(&u_shape, &strict_envelope), SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone_strict(&strict_envelope, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT((int)strict_envelope.n_vertices, 4);
     ASSERT_EQ_INT(blend_polygon_contains_point(&monotone_envelope, 1.5, 0.5, &flag), SUCCESS);
     ASSERT_EQ_INT(flag, 1);
     ASSERT_EQ_INT(blend_polygon_contains_point(&monotone_envelope, 1.5, 2.5, &flag), SUCCESS);
@@ -423,6 +433,12 @@ static int test_polygon_api_functions(void)
     ASSERT_EQ_INT(blend_polygon_xy_monotone_best_piecewise_envelope(&piecewise_input, &best_envelope,
                                                                     -1.0, 5.0, 0.0, 5.0, 256, 256), SUCCESS);
     ASSERT_EQ_INT(blend_polygon_is_xy_monotone(&best_envelope, &flag), SUCCESS);
+    ASSERT_EQ_INT(flag, 1);
+    ASSERT_EQ_INT(blend_polygon_xy_monotone_best_piecewise_envelope_strict(&piecewise_input,
+                                                                            &strict_best_envelope,
+                                                                            -1.0, 5.0, 0.0, 5.0, 256, 256),
+                  SUCCESS);
+    ASSERT_EQ_INT(blend_polygon_is_xy_monotone_strict(&strict_best_envelope, &flag), SUCCESS);
     ASSERT_EQ_INT(flag, 1);
     ASSERT_TRUE(polygon_test_iou(&piecewise_input, &best_envelope) >=
                 polygon_test_iou(&piecewise_input, &full_envelope));
@@ -474,9 +490,11 @@ static int test_polygon_api_functions(void)
     blend_polygon_free(&u_shape);
     blend_polygon_free(&monotone_exact);
     blend_polygon_free(&monotone_envelope);
+    blend_polygon_free(&strict_envelope);
     blend_polygon_free(&piecewise_input);
     blend_polygon_free(&full_envelope);
     blend_polygon_free(&best_envelope);
+    blend_polygon_free(&strict_best_envelope);
     blend_polygon_free(&reversed_input);
     blend_polygon_free(&reversed_best);
     blend_polygon_free(&bowtie);

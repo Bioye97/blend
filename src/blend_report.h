@@ -31,6 +31,9 @@ int blend_set_verbosity(blend_verbosity level);
 /* Get active message verbosity */
 blend_verbosity blend_get_verbosity(void);
 
+/* Get elapsed wall-clock seconds from a monotonic clock when available */
+double blend_elapsed_seconds(void);
+
 /* Report a message according to the active verbosity */
 void BLEND_Report(blend_verbosity level, const char *format, ...);
 

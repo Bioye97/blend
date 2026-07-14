@@ -169,16 +169,43 @@ if(BLEND_BUILD_TESTS)
   add_test(NAME blend_cli_module_exists COMMAND blend docs =)
   add_test(
     NAME blend_docs_usage_no_error
-    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> docs > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend docs - Show documentation for a BLEND module' $tmp/out && grep -q '^usage: blend docs' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && ! grep -q '^BLEND modules:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> docs > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend docs - Show HTML documentation for a BLEND module' $tmp/out && grep -q '^usage: blend docs' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && ! grep -q '^BLEND modules:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_docs_module_lookup
-    COMMAND blend docs window2d
+    COMMAND bash -c "$<TARGET_FILE:blend> docs -Q window2d"
   )
   set_tests_properties(
     blend_docs_module_lookup
     PROPERTIES
-      PASS_REGULAR_EXPRESSION "window2d - Generate 2D window weights"
+      PASS_REGULAR_EXPRESSION "(file://.*/doc/html/modules/window2d.html|https://ajalalab.com/blend/modules/window2d.html)"
+  )
+  add_test(
+    NAME blend_docs_option_lookup
+    COMMAND bash -c "$<TARGET_FILE:blend> docs -Q window1d -R"
+  )
+  set_tests_properties(
+    blend_docs_option_lookup
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "(file://.*/doc/html/modules/window1d.html#r|https://ajalalab.com/blend/modules/window1d.html#r)"
+  )
+  add_test(
+    NAME blend_docs_server_lookup
+    COMMAND blend docs -Q -S windows
+  )
+  set_tests_properties(
+    blend_docs_server_lookup
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "https://ajalalab.com/blend/reference/windows.html"
+  )
+  add_test(
+    NAME blend_docs_query_must_be_first
+    COMMAND blend docs window1d -Q
+  )
+  set_tests_properties(
+    blend_docs_query_must_be_first
+    PROPERTIES
+      WILL_FAIL TRUE
   )
   add_test(
     NAME blend_monotone_usage_no_error
@@ -208,7 +235,11 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_monotone_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; awk '{line[NR]=$0} END{for(i=NR;i>0;i--) print line[i]}' $tmp/poly.txt > $tmp/rev.txt; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/rev.txt > $tmp/rev_out 2> $tmp/rev_err; rev_status=$?; grep -q 'using best IoU piecewise envelope method' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q 'using best IoU piecewise envelope method' $tmp/rev_err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/rev_err && cmp -s $tmp/out $tmp/rev_out && $<TARGET_FILE:blend> monotone $tmp/out | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && test $rev_status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; awk '{line[NR]=$0} END{for(i=NR;i>0;i--) print line[i]}' $tmp/poly.txt > $tmp/rev.txt; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; $<TARGET_FILE:blend> monotone -Mb -G256/256 $tmp/rev.txt > $tmp/rev_out 2> $tmp/rev_err; rev_status=$?; grep -q 'using best IoU piecewise envelope method' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q 'using best IoU piecewise envelope method' $tmp/rev_err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/rev_err && $<TARGET_FILE:blend> monotone $tmp/out | grep -q 'polygon is xy-monotone' && $<TARGET_FILE:blend> monotone $tmp/rev_out | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && test $rev_status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_monotone_timing
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone -Vt -Mb -G16/16 $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'blend \\[timing\\]: monotone: read 8 polygon vertices' $tmp/err && grep -q 'blend \\[timing\\]: polygon: evaluating best IoU xy-monotone envelope candidates on 256 grid samples' $tmp/err && grep -q 'blend \\[timing\\]: polygon: selected best IoU xy-monotone envelope' $tmp/err && grep -q 'blend \\[timing\\]: monotone: converted polygon with -Mb' $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_monotone_envelope_already_monotone
@@ -219,12 +250,16 @@ if(BLEND_BUILD_TESTS)
     COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n1 3\\n3 -1\\n4 4\\n0 4\\n' > $tmp/poly.txt; $<TARGET_FILE:blend> monotone $tmp/poly.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'polygon edges must not self-intersect' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
   )
   add_test(
-    NAME blend_example_ex13
-    COMMAND bash -c "tmp=$(mktemp -d); cp ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex13/south_america.txt ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex13/ex13.sh $tmp; cd $tmp; BLEND=$<TARGET_FILE:blend> sh ./ex13.sh > run.out 2> run.err; status=$?; grep -q 'monotone: polygon is not xy-monotone' ex13_status.txt && grep -q 'using envelope method' run.err && grep -q 'using best IoU piecewise envelope method' run.err && test -s ex13_monotone_envelope.txt && test -s ex13_monotone_best.txt && test -s ex13_monotone_best_plot.txt; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    NAME blend_example_ex01_monotone
+    COMMAND bash -c "tmp=$(mktemp -d); cp ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex01_monotone/south_america.txt ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex01_monotone/ex01_monotone.sh $tmp; cd $tmp; BLEND=$<TARGET_FILE:blend> sh ./ex01_monotone.sh > run.out 2> run.err; status=$?; grep -q 'monotone: polygon is not xy-monotone' ex01_status.txt && grep -q 'using envelope method' run.err && grep -q 'using best IoU piecewise envelope method' run.err && test -s south_america_envelope.txt && test -s south_america_monotone.txt && test -s south_america_monotone_plot.txt; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window1d_usage_no_error
     COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window1d > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend window1d - Generate 1-D blending weights' $tmp/out && grep -q '^usage: blend window1d' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window1d_timing_grid
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window1d -Vt -R0/2 -I1 -Fboxcar -T0/0 > $tmp/out 2> $tmp/err; status=$?; grep -q 'blend \\[timing\\]: window1d: writing 3 grid nodes' $tmp/err && grep -q 'blend \\[timing\\]: window1d: wrote 3 grid nodes' $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(NAME blend_window1d_cosine COMMAND blend window1d -R0/4 -I1 --taper_ratio=0.25 --function=cosine)
   set_tests_properties(
@@ -315,6 +350,10 @@ if(BLEND_BUILD_TESTS)
     COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window2d > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend window2d - Generate 2-D blending weights' $tmp/out && grep -q '^usage: blend window2d' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
+    NAME blend_window2d_timing_query
+    COMMAND bash -c "tmp=$(mktemp -d); printf '1 1\\n' | $<TARGET_FILE:blend> window2d -Vt -R0/2/0/2 -I1 -Fboxcar/boxcar > $tmp/out 2> $tmp/err; status=$?; grep -q 'blend \\[timing\\]: window2d: evaluated 1 query points' $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
     NAME blend_window2d_boxcar_grid
     COMMAND bash -c "$<TARGET_FILE:blend> window2d -R0/2/0/2 -I1 -Fboxcar/boxcar -T0/0/0/0 2> /dev/null | awk 'NR != 9 {next} {print} END {if (NR != 9) exit 1}'"
   )
@@ -352,19 +391,23 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window2d_blendfile_monotone_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'is not xy-monotone; using its xy-monotone envelope from -Me' $tmp/err && grep -q 'original number of vertices = 8, final number of vertices = 4' $tmp/err && grep -q 'modified polygon for .* will not be written; use -N to write it' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -ME -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its strict xy-monotone envelope from -ME' $tmp/err && grep -q 'original number of vertices = 8, final number of vertices = 4' $tmp/err && grep -q 'modified polygon for .* will not be written; use -N to write it' $tmp/err && grep -q '1.5 2.5 1.000000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window2d_blendfile_write_monotone_polygon
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -Me -N -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; test -s $tmp/poly.txt_monotone && grep -q 'wrote modified xy-monotone polygon to' $tmp/err && $<TARGET_FILE:blend> monotone $tmp/poly.txt_monotone | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -ME -N -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; test -s $tmp/poly_monotone.txt && grep -q 'wrote modified xy-monotone polygon to' $tmp/err && $<TARGET_FILE:blend> monotone -ME $tmp/poly_monotone.txt | grep -q 'polygon is already strictly xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window2d_blendfile_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5\\n' | $<TARGET_FILE:blend> window2d -R-1/5/0/5 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q '4.5 0.5 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5\\n' | $<TARGET_FILE:blend> window2d -R-1/5/0/5 -I1 -MB -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its strict best IoU piecewise xy-monotone envelope from -MB' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q '4.5 0.5 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window2d_south_america_boundary
+    COMMAND bash -c "tmp=$(mktemp -d); cp ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex03_window2d/south_america.txt $tmp; printf 'south_america.txt cosine/cosine 0.49/0.49/0.49/0.49\\n' > $tmp/blend.txt; cd $tmp; $<TARGET_FILE:blend> window2d -R-85/-30/-60/15 -I0.5 -Bblend.txt -Cp -ME -N > out 2> err; status=$?; test -s out && test -s south_america_monotone.txt && grep -q 'grid-snapped polygon south_america.txt' err && grep -q 'using its strict xy-monotone envelope from -ME' err && ! grep -q 'falling back to -ME' err && ! grep -q 'blend \\[error\\]' err && ! grep -q 'could not assemble boundary' err && ! grep -q 'irregular vertices' err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window2d_blendfile_reject_nonmonotone
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'check -M if you want BLEND to refine it with -Me or -Mb' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s boxcar/boxcar 0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5\\n' | $<TARGET_FILE:blend> window2d -R0/3/0/3 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'use -ME or -MB' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
   )
   add_test(
     NAME blend_window2d_blendfile_ignores_function_taper
@@ -380,6 +423,10 @@ if(BLEND_BUILD_TESTS)
   add_test(
     NAME blend_window3d_usage_no_error
     COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window3d > $tmp/out 2> $tmp/err; status=$?; grep -q '^blend window3d - Generate 3-D blending weights' $tmp/out && grep -q '^usage: blend window3d' $tmp/out && grep -q '^REQUIRED ARGUMENTS:' $tmp/out && grep -q '^OPTIONAL ARGUMENTS:' $tmp/out && test ! -s $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window3d_timing_grid
+    COMMAND bash -c "tmp=$(mktemp -d); $<TARGET_FILE:blend> window3d -Vt -R0/1/0/1/0/1 -I1 -Fboxcar/boxcar/boxcar -T0/0/0/0/0/0 > $tmp/out 2> $tmp/err; status=$?; grep -q 'blend \\[timing\\]: window3d: writing 8 grid nodes (2 x 2 x 2)' $tmp/err && grep -q 'blend \\[timing\\]: window3d: wrote 8 grid nodes' $tmp/err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window3d_boxcar_grid
@@ -410,15 +457,19 @@ if(BLEND_BUILD_TESTS)
   )
   add_test(
     NAME blend_window3d_blendfile_best_piecewise_envelope
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -Mb -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its best IoU piecewise xy-monotone envelope from -Mb' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q 'modified polygon for .* will not be written; use -N to write it' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n4 0\\n4.5 0.5\\n5 1\\n5 4\\n4.7 4.4\\n4 5\\n1 5\\n0.7 4.7\\n0.3 4.4\\n-1 4\\n-1 1\\n-0.2 0.8\\n-0.8 0.4\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '4.5 0.5 1\\n' | $<TARGET_FILE:blend> window3d -R-1/5/0/5/0/2 -I1 -MB -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'using its strict best IoU piecewise xy-monotone envelope from -MB' $tmp/err && grep -q 'original number of vertices = 14, final number of vertices' $tmp/err && grep -q 'modified polygon for .* will not be written; use -N to write it' $tmp/err && grep -q '4.5 0.5 1 0.750000000000' $tmp/out; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+  )
+  add_test(
+    NAME blend_window3d_south_america_boundary
+    COMMAND bash -c "tmp=$(mktemp -d); cp ${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/ex04_window3d/south_america.txt $tmp; printf 'south_america.txt 10 75 cosine/cosine/cosine 0.49/0.49/0.49/0.49/0.49/0.49\\n' > $tmp/blend.txt; cd $tmp; $<TARGET_FILE:blend> window3d -R-85/-30/-60/15/0/80 -I1/1/5 -Bblend.txt -Cp -ME -N > out 2> err; status=$?; test -s out && test -s south_america_monotone.txt && grep -q 'grid-snapped polygon south_america.txt' err && grep -q 'using its strict xy-monotone envelope from -ME' err && ! grep -q 'falling back to -ME' err && ! grep -q 'blend \\[error\\]' err && ! grep -q 'could not assemble boundary' err && ! grep -q 'irregular vertices' err; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window3d_blendfile_write_monotone_polygon
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5 1\\n' | $<TARGET_FILE:blend> window3d -R0/3/0/3/0/2 -I1 -Me -N -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; test -s $tmp/poly.txt_monotone && grep -q 'wrote modified xy-monotone polygon to' $tmp/err && $<TARGET_FILE:blend> monotone $tmp/poly.txt_monotone | grep -q 'polygon is xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5 1\\n' | $<TARGET_FILE:blend> window3d -R0/3/0/3/0/2 -I1 -ME -N -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; test -s $tmp/poly_monotone.txt && grep -q 'wrote modified xy-monotone polygon to' $tmp/err && $<TARGET_FILE:blend> monotone -ME $tmp/poly_monotone.txt | grep -q 'polygon is already strictly xy-monotone'; result=$?; rm -rf $tmp; test $status -eq 0 && exit $result"
   )
   add_test(
     NAME blend_window3d_blendfile_reject_nonmonotone
-    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5 1\\n' | $<TARGET_FILE:blend> window3d -R0/3/0/3/0/2 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'check -M if you want BLEND to refine it with -Me or -Mb' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
+    COMMAND bash -c "tmp=$(mktemp -d); printf '0 0\\n3 0\\n3 3\\n2 3\\n2 1\\n1 1\\n1 3\\n0 3\\n' > $tmp/poly.txt; printf '%s 0 2 boxcar/boxcar/boxcar 0/0/0/0/0/0\\n' $tmp/poly.txt > $tmp/blend.txt; printf '1.5 2.5 1\\n' | $<TARGET_FILE:blend> window3d -R0/3/0/3/0/2 -I1 -B$tmp/blend.txt > $tmp/out 2> $tmp/err; status=$?; grep -q 'use -ME or -MB' $tmp/err; result=$?; rm -rf $tmp; test $status -ne 0 && exit $result; exit 1"
   )
   add_test(
     NAME blend_window3d_bad_ratio
@@ -429,7 +480,7 @@ if(BLEND_BUILD_TESTS)
 endif()
 
 if(BLEND_BUILD_EXAMPLES)
-  foreach(example ex01 ex02 ex03 ex04 ex05 ex06 ex07 ex08 ex09 ex10 ex11 ex12)
+  foreach(example ex01_api ex02_api ex03_api ex04_api)
     add_executable(${example} doc/examples/${example}/${example}.c)
     if(TARGET blend_static)
       target_link_libraries(${example} PRIVATE blend_static)
@@ -442,6 +493,38 @@ endif()
 set(BLEND_DOC_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/html")
 set(BLEND_DOC_LATEX_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/latex")
 set(BLEND_DOC_PDF "${BLEND_DOC_HTML_DIR}/_downloads/blend.pdf")
+set(BLEND_DOC_USAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/usage")
+set(BLEND_DOC_USAGE_FILES "${BLEND_DOC_USAGE_DIR}/blend.txt")
+target_compile_definitions(
+  blend
+  PRIVATE
+    BLEND_DOC_HTML_DIR_BUILD="${BLEND_DOC_HTML_DIR}"
+    BLEND_DOC_HTML_DIR_INSTALL="${CMAKE_INSTALL_PREFIX}/${BLEND_INSTALL_DOCDIR}/html"
+    BLEND_DOC_SERVER_URL="https://ajalalab.com/blend/"
+)
+
+add_custom_command(
+  OUTPUT "${BLEND_DOC_USAGE_DIR}/blend.txt"
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${BLEND_DOC_USAGE_DIR}"
+  COMMAND bash -c "\"$1\" -? > \"$2\"" _ "$<TARGET_FILE:blend>" "${BLEND_DOC_USAGE_DIR}/blend.txt"
+  DEPENDS blend
+  COMMENT "Generating BLEND command usage"
+  VERBATIM
+)
+
+foreach(module docs monotone window1d window2d window3d)
+  list(APPEND BLEND_DOC_USAGE_FILES "${BLEND_DOC_USAGE_DIR}/${module}.txt")
+  add_custom_command(
+    OUTPUT "${BLEND_DOC_USAGE_DIR}/${module}.txt"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${BLEND_DOC_USAGE_DIR}"
+    COMMAND bash -c "\"$1\" \"$2\" --help > \"$3\"" _ "$<TARGET_FILE:blend>" "${module}" "${BLEND_DOC_USAGE_DIR}/${module}.txt"
+    DEPENDS blend
+    COMMENT "Generating BLEND ${module} usage"
+    VERBATIM
+  )
+endforeach()
+
+add_custom_target(docs_usage DEPENDS ${BLEND_DOC_USAGE_FILES})
 
 if(BLEND_BUILD_DOCS)
   find_program(SPHINX_BUILD_EXECUTABLE NAMES sphinx-build)
@@ -450,7 +533,8 @@ if(BLEND_BUILD_DOCS)
   if(SPHINX_BUILD_EXECUTABLE)
     add_custom_target(
       docs_html
-      COMMAND "${SPHINX_BUILD_EXECUTABLE}"
+      COMMAND "${CMAKE_COMMAND}" -E env "BLEND_DOC_USAGE_DIR=${BLEND_DOC_USAGE_DIR}"
+              "${SPHINX_BUILD_EXECUTABLE}"
               -b html
               -D version=${PROJECT_VERSION}
               -D release=${PROJECT_VERSION}
@@ -459,6 +543,7 @@ if(BLEND_BUILD_DOCS)
       COMMENT "Building BLEND HTML documentation"
       VERBATIM
     )
+    add_dependencies(docs_html docs_usage)
   else()
     message(WARNING "sphinx-build was not found; documentation targets will not be available.")
   endif()
@@ -466,7 +551,8 @@ if(BLEND_BUILD_DOCS)
   if(SPHINX_BUILD_EXECUTABLE AND LATEXMK_EXECUTABLE)
     add_custom_target(
       docs_pdf
-      COMMAND "${SPHINX_BUILD_EXECUTABLE}"
+      COMMAND "${CMAKE_COMMAND}" -E env "BLEND_DOC_USAGE_DIR=${BLEND_DOC_USAGE_DIR}"
+              "${SPHINX_BUILD_EXECUTABLE}"
               -b latex
               -D version=${PROJECT_VERSION}
               -D release=${PROJECT_VERSION}
@@ -539,7 +625,7 @@ install(
 )
 
 install(
-  FILES ChangeLog LICENSE.TXT COPYING COPYING.LESSER
+  FILES ChangeLog LICENSE.TXT COPYINGv3 COPYING.LESSERv3
   DESTINATION ${BLEND_INSTALL_DOCDIR}
 )
 

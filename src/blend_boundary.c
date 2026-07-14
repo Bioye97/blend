@@ -20,6 +20,47 @@ static void blend_boundary_free_points(double **points, int rows)
     free(points);
 }
 
+static double **blend_boundary_copy_points(double **points, int rows)
+{
+    double **copy = NULL;
+    int i;
+
+    if (points == NULL || rows <= 0) {
+        return NULL;
+    }
+
+    copy = (double **)malloc(sizeof(*copy) * (size_t)rows);
+    if (copy == NULL) {
+        return NULL;
+    }
+
+    for (i = 0; i < rows; i++) {
+        copy[i] = (double *)malloc(sizeof(*copy[i]) * 2);
+        if (copy[i] == NULL) {
+            blend_boundary_free_points(copy, i);
+            return NULL;
+        }
+        copy[i][0] = points[i][0];
+        copy[i][1] = points[i][1];
+    }
+
+    return copy;
+}
+
+static void blend_boundary_restore_points(double **dst, double **src, int rows)
+{
+    int i;
+
+    if (dst == NULL || src == NULL) {
+        return;
+    }
+
+    for (i = 0; i < rows; i++) {
+        dst[i][0] = src[i][0];
+        dst[i][1] = src[i][1];
+    }
+}
+
 void blend_permuted_vertex_free(permuted_vertex *vertex)
 {
     if (vertex == NULL) {
@@ -893,6 +934,432 @@ int assemble_btrv(window *data, permuted_vertex *vertex) {
 
     free(tmp_array);
     return SUCCESS;
+}
+
+typedef struct boundary_path_candidate {
+    int valid;
+    int count;
+    int *indices;
+    double *points;
+} boundary_path_candidate;
+
+static void boundary_path_candidate_free(boundary_path_candidate *candidate)
+{
+    if (candidate == NULL) {
+        return;
+    }
+
+    free(candidate->indices);
+    free(candidate->points);
+    candidate->indices = NULL;
+    candidate->points = NULL;
+    candidate->count = 0;
+    candidate->valid = 0;
+}
+
+static int boundary_path_candidate_alloc(boundary_path_candidate *candidate, int capacity)
+{
+    if (candidate == NULL || capacity < 0) {
+        return FAIL;
+    }
+
+    memset(candidate, 0, sizeof(*candidate));
+    candidate->indices = (int *)calloc((size_t)(capacity > 0 ? capacity : 1), sizeof(*candidate->indices));
+    candidate->points = (double *)calloc((size_t)(capacity > 0 ? capacity : 1) * 2, sizeof(*candidate->points));
+    if (candidate->indices == NULL || candidate->points == NULL) {
+        boundary_path_candidate_free(candidate);
+        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not allocate traversal path candidate\n");
+        return FAIL;
+    }
+
+    return SUCCESS;
+}
+
+static double boundary_coordinate_tolerance(const window *data)
+{
+    double scale = 1.0;
+
+    if (data != NULL) {
+        if (data->nx > 0) scale = fmax(scale, (double)data->nx);
+        if (data->ny > 0) scale = fmax(scale, (double)data->ny);
+    }
+
+    return 1.0e-10 * scale;
+}
+
+static int boundary_points_equal(const double *a, const double *b, double tolerance)
+{
+    return fabs(a[0] - b[0]) <= tolerance && fabs(a[1] - b[1]) <= tolerance;
+}
+
+static int boundary_value_between_open(double value, double a, double b, double tolerance)
+{
+    double min_value = fmin(a, b);
+    double max_value = fmax(a, b);
+
+    return value > min_value + tolerance && value < max_value - tolerance;
+}
+
+static int boundary_point_on_bbox_side(const window *data, const double *point, double tolerance)
+{
+    return fabs(point[0]) <= tolerance ||
+           fabs(point[0] - (double)(data->nx - 1)) <= tolerance ||
+           fabs(point[1]) <= tolerance ||
+           fabs(point[1] - (double)(data->ny - 1)) <= tolerance;
+}
+
+static int boundary_find_vertex_index(const window *data, const double *point, double tolerance, int *index_out)
+{
+    int i;
+
+    if (data == NULL || point == NULL || index_out == NULL) {
+        return FAIL;
+    }
+
+    for (i = 0; i < data->row_size; i++) {
+        if (fabs(data->vertices[i][0] - point[0]) <= tolerance &&
+            fabs(data->vertices[i][1] - point[1]) <= tolerance) {
+            *index_out = i;
+            return SUCCESS;
+        }
+    }
+
+    return FAIL;
+}
+
+static int boundary_path_is_strictly_monotone(const double *start, const boundary_path_candidate *candidate,
+                                              const double *end, int x_direction, int y_direction,
+                                              double tolerance)
+{
+    double prev_x = start[0];
+    double prev_y = start[1];
+    int i;
+
+    for (i = 0; i < candidate->count; i++) {
+        double x = candidate->points[2 * i];
+        double y = candidate->points[2 * i + 1];
+        double dx = x - prev_x;
+        double dy = y - prev_y;
+
+        if ((double)x_direction * dx <= tolerance || (double)y_direction * dy <= tolerance) {
+            return 0;
+        }
+        prev_x = x;
+        prev_y = y;
+    }
+
+    if ((double)x_direction * (end[0] - prev_x) <= tolerance ||
+        (double)y_direction * (end[1] - prev_y) <= tolerance) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int boundary_collect_path_candidate(const window *data, int start_index, int end_index, int step,
+                                           const double *start, const double *end,
+                                           int x_direction, int y_direction, double tolerance,
+                                           boundary_path_candidate *candidate)
+{
+    int index;
+    int guard = 0;
+
+    if (data == NULL || start == NULL || end == NULL || candidate == NULL ||
+        (step != 1 && step != -1) || data->row_size <= 0) {
+        return FAIL;
+    }
+
+    candidate->valid = 0;
+    candidate->count = 0;
+
+    if (start_index == end_index) {
+        candidate->valid = 1;
+        return SUCCESS;
+    }
+
+    index = start_index;
+    while (index != end_index) {
+        double *point;
+
+        if (step > 0) {
+            index = (index + 1) % data->row_size;
+        }
+        else {
+            index = (index == 0) ? data->row_size - 1 : index - 1;
+        }
+        guard++;
+        if (guard > data->row_size) {
+            return FAIL;
+        }
+        if (index == end_index) {
+            break;
+        }
+
+        point = data->vertices[index];
+        if (boundary_point_on_bbox_side(data, point, tolerance)) {
+            continue;
+        }
+        if (!boundary_value_between_open(point[0], start[0], end[0], tolerance) ||
+            !boundary_value_between_open(point[1], start[1], end[1], tolerance)) {
+            return SUCCESS;
+        }
+
+        candidate->indices[candidate->count] = index;
+        candidate->points[2 * candidate->count] = point[0];
+        candidate->points[2 * candidate->count + 1] = point[1];
+        candidate->count++;
+    }
+
+    if (candidate->count == 0) {
+        if (boundary_points_equal(start, end, tolerance) ||
+            ((double)x_direction * (end[0] - start[0]) > tolerance &&
+             (double)y_direction * (end[1] - start[1]) > tolerance)) {
+            candidate->valid = 1;
+        }
+        return SUCCESS;
+    }
+
+    candidate->valid = boundary_path_is_strictly_monotone(start, candidate, end,
+                                                          x_direction, y_direction, tolerance);
+    return SUCCESS;
+}
+
+static int boundary_nonbbox_vertex_count(const window *data, double tolerance)
+{
+    int i;
+    int count = 0;
+
+    for (i = 0; i < data->row_size; i++) {
+        if (!boundary_point_on_bbox_side(data, data->vertices[i], tolerance)) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+static int boundary_choose_path_candidates(const window *data, double tolerance,
+                                           boundary_path_candidate candidates[4][2],
+                                           int selected[4])
+{
+    int a, b, c, d;
+    int nonbbox_count = boundary_nonbbox_vertex_count(data, tolerance);
+
+    for (a = 0; a < 2; a++) {
+        for (b = 0; b < 2; b++) {
+            for (c = 0; c < 2; c++) {
+                for (d = 0; d < 2; d++) {
+                    int choices[4];
+                    unsigned char *assigned = NULL;
+                    int assigned_count = 0;
+                    int sector;
+                    int ok = 1;
+
+                    choices[0] = a;
+                    choices[1] = b;
+                    choices[2] = c;
+                    choices[3] = d;
+
+                    for (sector = 0; sector < 4; sector++) {
+                        if (!candidates[sector][choices[sector]].valid) {
+                            ok = 0;
+                            break;
+                        }
+                    }
+                    if (!ok) {
+                        continue;
+                    }
+
+                    assigned = (unsigned char *)calloc((size_t)(data->row_size > 0 ? data->row_size : 1),
+                                                       sizeof(*assigned));
+                    if (assigned == NULL) {
+                        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not allocate traversal assignments\n");
+                        return FAIL;
+                    }
+
+                    for (sector = 0; sector < 4 && ok; sector++) {
+                        boundary_path_candidate *candidate = &candidates[sector][choices[sector]];
+                        int i;
+
+                        for (i = 0; i < candidate->count; i++) {
+                            int index = candidate->indices[i];
+
+                            if (assigned[index]) {
+                                ok = 0;
+                                break;
+                            }
+                            assigned[index] = 1;
+                            assigned_count++;
+                        }
+                    }
+
+                    if (ok && assigned_count == nonbbox_count) {
+                        selected[0] = choices[0];
+                        selected[1] = choices[1];
+                        selected[2] = choices[2];
+                        selected[3] = choices[3];
+                        free(assigned);
+                        return SUCCESS;
+                    }
+
+                    free(assigned);
+                }
+            }
+        }
+    }
+
+    return FAIL;
+}
+
+static int boundary_assign_path_vertices(double ***target, int *row_size,
+                                         const boundary_path_candidate *candidate)
+{
+    double **points = NULL;
+    int i;
+
+    if (target == NULL || row_size == NULL || candidate == NULL) {
+        return FAIL;
+    }
+
+    *target = NULL;
+    *row_size = 0;
+
+    if (candidate->count == 0) {
+        return SUCCESS;
+    }
+
+    points = (double **)malloc(sizeof(*points) * (size_t)candidate->count);
+    if (points == NULL) {
+        return FAIL;
+    }
+    for (i = 0; i < candidate->count; i++) {
+        points[i] = (double *)malloc(sizeof(*points[i]) * 2);
+        if (points[i] == NULL) {
+            blend_boundary_free_points(points, i);
+            return FAIL;
+        }
+        points[i][0] = candidate->points[2 * i];
+        points[i][1] = candidate->points[2 * i + 1];
+    }
+
+    if (ascend_y(points, candidate->count) != SUCCESS) {
+        blend_boundary_free_points(points, candidate->count);
+        return FAIL;
+    }
+
+    *target = points;
+    *row_size = candidate->count;
+    return SUCCESS;
+}
+
+static int assemble_path_vertices(window *data, permuted_vertex *vertex)
+{
+    boundary_path_candidate candidates[4][2];
+    double tolerance = boundary_coordinate_tolerance(data);
+    double *bottom_left = vertex->bottom_vertices[0];
+    double *bottom_right = vertex->bottom_vertices[vertex->row_size_bv > 1 ? 1 : 0];
+    double *left_bottom = vertex->left_vertices[0];
+    double *left_top = vertex->left_vertices[vertex->row_size_lv > 1 ? 1 : 0];
+    double *top_left = vertex->top_vertices[0];
+    double *top_right = vertex->top_vertices[vertex->row_size_tv > 1 ? 1 : 0];
+    double *right_bottom = vertex->right_vertices[0];
+    double *right_top = vertex->right_vertices[vertex->row_size_rv > 1 ? 1 : 0];
+    int bottom_left_index = 0, bottom_right_index = 0;
+    int left_bottom_index = 0, left_top_index = 0;
+    int top_left_index = 0, top_right_index = 0;
+    int right_bottom_index = 0, right_top_index = 0;
+    int selected[4] = {-1, -1, -1, -1};
+    int i;
+    int initialized = 0;
+    int status = FAIL;
+
+    memset(candidates, 0, sizeof(candidates));
+    for (i = 0; i < 8; i++) {
+        if (boundary_path_candidate_alloc(&candidates[i / 2][i % 2], data->row_size) != SUCCESS) {
+            goto cleanup;
+        }
+    }
+    initialized = 1;
+
+    if (boundary_find_vertex_index(data, bottom_left, tolerance, &bottom_left_index) != SUCCESS ||
+        boundary_find_vertex_index(data, bottom_right, tolerance, &bottom_right_index) != SUCCESS ||
+        boundary_find_vertex_index(data, left_bottom, tolerance, &left_bottom_index) != SUCCESS ||
+        boundary_find_vertex_index(data, left_top, tolerance, &left_top_index) != SUCCESS ||
+        boundary_find_vertex_index(data, top_left, tolerance, &top_left_index) != SUCCESS ||
+        boundary_find_vertex_index(data, top_right, tolerance, &top_right_index) != SUCCESS ||
+        boundary_find_vertex_index(data, right_bottom, tolerance, &right_bottom_index) != SUCCESS ||
+        boundary_find_vertex_index(data, right_top, tolerance, &right_top_index) != SUCCESS) {
+        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not locate bounding-box anchor vertices\n");
+        goto cleanup;
+    }
+
+    if (boundary_collect_path_candidate(data, bottom_left_index, left_bottom_index, 1,
+                                        bottom_left, left_bottom, -1, 1, tolerance,
+                                        &candidates[0][0]) != SUCCESS ||
+        boundary_collect_path_candidate(data, bottom_left_index, left_bottom_index, -1,
+                                        bottom_left, left_bottom, -1, 1, tolerance,
+                                        &candidates[0][1]) != SUCCESS ||
+        boundary_collect_path_candidate(data, left_top_index, top_left_index, 1,
+                                        left_top, top_left, 1, 1, tolerance,
+                                        &candidates[1][0]) != SUCCESS ||
+        boundary_collect_path_candidate(data, left_top_index, top_left_index, -1,
+                                        left_top, top_left, 1, 1, tolerance,
+                                        &candidates[1][1]) != SUCCESS ||
+        boundary_collect_path_candidate(data, right_top_index, top_right_index, 1,
+                                        right_top, top_right, -1, 1, tolerance,
+                                        &candidates[2][0]) != SUCCESS ||
+        boundary_collect_path_candidate(data, right_top_index, top_right_index, -1,
+                                        right_top, top_right, -1, 1, tolerance,
+                                        &candidates[2][1]) != SUCCESS ||
+        boundary_collect_path_candidate(data, bottom_right_index, right_bottom_index, 1,
+                                        bottom_right, right_bottom, 1, 1, tolerance,
+                                        &candidates[3][0]) != SUCCESS ||
+        boundary_collect_path_candidate(data, bottom_right_index, right_bottom_index, -1,
+                                        bottom_right, right_bottom, 1, 1, tolerance,
+                                        &candidates[3][1]) != SUCCESS) {
+        goto cleanup;
+    }
+
+    if (boundary_choose_path_candidates(data, tolerance, candidates, selected) != SUCCESS) {
+        BLEND_Report(BLEND_MSG_ERROR,
+                     "boundary: polygon vertices cannot be assigned to strict xy-monotone traversal paths; revise vertices\n");
+        goto cleanup;
+    }
+
+    if (boundary_assign_path_vertices(&vertex->bottom_to_left_vertices, &vertex->row_size_btlv,
+                                      &candidates[0][selected[0]]) != SUCCESS ||
+        boundary_assign_path_vertices(&vertex->left_to_top_vertices, &vertex->row_size_lttv,
+                                      &candidates[1][selected[1]]) != SUCCESS ||
+        boundary_assign_path_vertices(&vertex->right_to_top_vertices, &vertex->row_size_rttv,
+                                      &candidates[2][selected[2]]) != SUCCESS ||
+        boundary_assign_path_vertices(&vertex->bottom_to_right_vertices, &vertex->row_size_btrv,
+                                      &candidates[3][selected[3]]) != SUCCESS) {
+        goto cleanup;
+    }
+
+    status = SUCCESS;
+
+cleanup:
+    if (status != SUCCESS) {
+        blend_boundary_free_points(vertex->bottom_to_left_vertices, vertex->row_size_btlv);
+        blend_boundary_free_points(vertex->left_to_top_vertices, vertex->row_size_lttv);
+        blend_boundary_free_points(vertex->right_to_top_vertices, vertex->row_size_rttv);
+        blend_boundary_free_points(vertex->bottom_to_right_vertices, vertex->row_size_btrv);
+        vertex->bottom_to_left_vertices = NULL;
+        vertex->left_to_top_vertices = NULL;
+        vertex->right_to_top_vertices = NULL;
+        vertex->bottom_to_right_vertices = NULL;
+        vertex->row_size_btlv = 0;
+        vertex->row_size_lttv = 0;
+        vertex->row_size_rttv = 0;
+        vertex->row_size_btrv = 0;
+    }
+    if (initialized) {
+        for (i = 0; i < 8; i++) {
+            boundary_path_candidate_free(&candidates[i / 2][i % 2]);
+        }
+    }
+    return status;
 }
 
 /* Hanging sweep */
@@ -1829,18 +2296,43 @@ int boundary_assembly(window *data, permuted_vertex *vertex) {
     int i;
     const int length_x = data->ny;
     const int length_y = data->nx;
+    double **ordered_vertices = NULL;
     int *nnx_diff;
     int *nny_diff;
     nnx_diff = (int *)malloc(sizeof(int) * length_x);
     nny_diff = (int *)malloc(sizeof(int) * length_y);
+    if (nnx_diff == NULL || nny_diff == NULL) {
+        free(nnx_diff);
+        free(nny_diff);
+        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not allocate stepping-vector differences\n");
+        return FAIL;
+    }
 
     /* Remove duplicate vertices and update row dimensions. TODO: Use pointers here */
     data->row_size = unique_vertices(data->vertices, data->row_size);
+    if (data->row_size < 3) {
+        free(nnx_diff);
+        free(nny_diff);
+        return FAIL;
+    }
+
+    ordered_vertices = blend_boundary_copy_points(data->vertices, data->row_size);
+    if (ordered_vertices == NULL) {
+        free(nnx_diff);
+        free(nny_diff);
+        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not preserve polygon traversal order\n");
+        return FAIL;
+    }
 
     /* check that the vertices are bounded */
     if (bounding_boxcheck(data) != SUCCESS) {
+        blend_boundary_free_points(ordered_vertices, data->row_size);
+        free(nnx_diff);
+        free(nny_diff);
         return FAIL;
     }
+    blend_boundary_restore_points(data->vertices, ordered_vertices, data->row_size);
+    blend_boundary_free_points(ordered_vertices, data->row_size);
 
     /* Assemble bottom vertices */
     if (assemble_bv(data, vertex) != SUCCESS) {
@@ -1862,23 +2354,8 @@ int boundary_assembly(window *data, permuted_vertex *vertex) {
         return FAIL;
     }
 
-    /* Assemble bottom-to-left-vertices */
-    if (assemble_btlv(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Assemble left-to-top vertices */
-    if (assemble_lttv(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Assemble right-to-top vertices */
-    if (assemble_rttv(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Assemble bottom-to-right vertices */
-    if (assemble_btrv(data, vertex) != SUCCESS) {
+    /* Assemble traversal-aware interior vertex paths */
+    if (assemble_path_vertices(data, vertex) != SUCCESS) {
         return FAIL;
     }
 

@@ -94,21 +94,21 @@ for details.
 
 If you use BLEND in your work, please cite the following references:
 
-1. Ajala, R., Kolawole, F., Share, P. E., Sahakian, V., Delph, J. R.,
-   Hooft, E., & He, B. (2025).
-   [Toward an accessible framework for synthesizing solid earth models across
-   multiple scales](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales).
-   In `Seismological Society of America Annual Meeting`, Baltimore, Maryland,
-   USA, vol. 96, p. 1364.
+1. Ajala, R., & Persaud, P. (2021).
+   [Effect of merging multiscale models on seismic wavefield predictions near
+   the southern San Andreas fault](https://scholar.google.com/scholar?q=Effect+of+merging+multiscale+models+on+seismic+wavefield+predictions+near+the+southern+San+Andreas+fault).
+   `Journal of Geophysical Research: Solid Earth`, 126, 1-23.
 
 2. Ajala, R., & Persaud, P. (2022).
    [Ground-motion evaluation of hybrid seismic velocity models](https://scholar.google.com/scholar?q=Ground-motion+evaluation+of+hybrid+seismic+velocity+models).
    `The Seismic Record`, 2, 186-196.
 
-3. Ajala, R., & Persaud, P. (2021).
-   [Effect of merging multiscale models on seismic wavefield predictions near
-   the southern San Andreas fault](https://scholar.google.com/scholar?q=Effect+of+merging+multiscale+models+on+seismic+wavefield+predictions+near+the+southern+San+Andreas+fault).
-   `Journal of Geophysical Research: Solid Earth`, 126, 1-23.
+3. Ajala, R., Kolawole, F., Share, P. E., Sahakian, V., Delph, J. R.,
+   Hooft, E., & He, B. (2025).
+   [Toward an accessible framework for synthesizing solid earth models across
+   multiple scales](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales).
+   In `Seismological Society of America Annual Meeting`, Baltimore, Maryland,
+   USA, vol. 96, p. 1364.
 
 
 ## Acknowledgment

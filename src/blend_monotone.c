@@ -36,13 +36,28 @@ static void monotone_usage(FILE *fp)
     fprintf(fp, "     Convert a non-xy-monotone polygon using the selected method and write the\n");
     fprintf(fp, "     resulting polygon vertices to standard output. If the input polygon is\n");
     fprintf(fp, "     already xy-monotone, it is written unchanged.\n");
-    fprintf(fp, "       e  Use the xy-monotone envelope method.\n");
-    fprintf(fp, "       b  Use the highest-IoU piecewise envelope from both traversal directions.\n");
-    fprintf(fp, "          This is sampled on the -G grid [Default is 256/256].\n\n");
+    fprintf(fp, "       e  Use the xy-monotone envelope (i.e., convex hull) method.\n");
+    fprintf(fp, "       b  Use the highest-IoU (Intersection over Union) piecewise envelope from both traversal directions.\n");
+    fprintf(fp, "          This is sampled on the -G grid [Default is 256/256] to compute the IoU.\n\n");
+    fprintf(fp, "       E  Use the strict xy-monotone envelope method.\n");
+    fprintf(fp, "          Here the nondecreasing condition is replaced with a strictly increasing condition.\n");
+    fprintf(fp, "       B  Use the strict highest-IoU piecewise envelope from both traversal\n");
+    fprintf(fp, "          directions, sampled on the -G grid [Default is 256/256].\n");
+    fprintf(fp, "          Here the nondecreasing condition is replaced with a strictly increasing condition.\n\n");
 
     fprintf(fp, "  -G<nx>[/<ny>], --grid=<nx>[/<ny>]\n");
-    fprintf(fp, "     Set the grid used to estimate IoU for -Mb. nx and ny must be positive\n");
+    fprintf(fp, "     Set the grid used to estimate IoU for -Mb or -MB. nx and ny must be positive\n");
     fprintf(fp, "     integers. If ny is omitted then ny = nx [Default is 256/256].\n\n");
+
+    fprintf(fp, "  -V[level], --verbose=<level>\n");
+    fprintf(fp, "     Select verbosity level [w]. Choose among q, e, w, t, i, c, and d:\n");
+    fprintf(fp, "       q  Quiet; suppress all diagnostic messages.\n");
+    fprintf(fp, "       e  Error messages only.\n");
+    fprintf(fp, "       w  Warnings and errors [Default].\n");
+    fprintf(fp, "       t  Timings, warnings, and errors.\n");
+    fprintf(fp, "       i  Informational messages, timings, warnings, and errors.\n");
+    fprintf(fp, "       c  Compatibility messages and all lower verbosity messages.\n");
+    fprintf(fp, "       d  Debug messages and all lower verbosity messages.\n\n");
 
     fprintf(fp, "  -?, --help\n");
     fprintf(fp, "     Print this usage message and exit.\n\n");
@@ -50,8 +65,8 @@ static void monotone_usage(FILE *fp)
     fprintf(fp, "EXAMPLES:\n\n");
     fprintf(fp, "  blend monotone polygon.txt\n");
     fprintf(fp, "     Check whether polygon.txt is simple and xy-monotone.\n\n");
-    fprintf(fp, "  blend monotone polygon.txt -Mb -G512/512 > polygon_monotone.txt\n");
-    fprintf(fp, "     Convert polygon.txt using the best-IoU piecewise method and write the result.\n\n");
+    fprintf(fp, "  blend monotone polygon.txt -MB -G512/512 > polygon_monotone.txt\n");
+    fprintf(fp, "     Convert polygon.txt using the strict highest-IoU piecewise method and write the result.\n\n");
     fprintf(fp, "  cat polygon.txt | blend monotone\n");
     fprintf(fp, "     Read polygon vertices from standard input and check monotonicity.\n");
 }
@@ -59,11 +74,11 @@ static void monotone_usage(FILE *fp)
 static int monotone_parse_method(const char *value, monotone_options *options)
 {
     if (value == NULL || value[0] == '\0' || value[1] != '\0') {
-        BLEND_Report(BLEND_MSG_ERROR, "monotone: monotone method must be one of e, b\n");
+        BLEND_Report(BLEND_MSG_ERROR, "monotone: monotone method must be one of e, b, E, B\n");
         return FAIL;
     }
 
-    if (value[0] != 'e' && value[0] != 'b') {
+    if (value[0] != 'e' && value[0] != 'b' && value[0] != 'E' && value[0] != 'B') {
         BLEND_Report(BLEND_MSG_ERROR, "monotone: unknown monotone method: %s\n", value);
         return FAIL;
     }
@@ -179,8 +194,8 @@ static int monotone_parse_options(int argc, char **argv, monotone_options *optio
         }
     }
 
-    if (options->has_grid && options->monotone_method != 'b') {
-        BLEND_Report(BLEND_MSG_WARNING, "monotone: -G/--grid is ignored unless -Mb is used\n");
+    if (options->has_grid && options->monotone_method != 'b' && options->monotone_method != 'B') {
+        BLEND_Report(BLEND_MSG_WARNING, "monotone: -G/--grid is ignored unless -Mb or -MB is used\n");
     }
 
     return SUCCESS;
@@ -323,7 +338,9 @@ int blend_monotone_module(int argc, char **argv)
     double xmin, xmax, ymin, ymax;
     int parse_status;
     int is_xy_monotone = 0;
+    int use_strict = 0;
     int status = SUCCESS;
+    double start;
 
     parse_status = monotone_parse_options(argc, argv, &options);
     if (parse_status == 2) {
@@ -336,9 +353,15 @@ int blend_monotone_module(int argc, char **argv)
         return FAIL;
     }
 
+    start = blend_elapsed_seconds();
     if (monotone_read_polygon(&options, &input) != SUCCESS) {
         return FAIL;
     }
+    BLEND_Report(BLEND_MSG_TIMING,
+                 "monotone: read %zu polygon vertices from %s in %.3f s\n",
+                 input.n_vertices,
+                 options.polygonfile != NULL ? options.polygonfile : "standard input",
+                 blend_elapsed_seconds() - start);
 
     if (blend_polygon_is_xy_monotone(&input, &is_xy_monotone) != SUCCESS) {
         blend_polygon_free(&input);
@@ -351,13 +374,23 @@ int blend_monotone_module(int argc, char **argv)
         return SUCCESS;
     }
 
-    if (options.monotone_method == 'e' || options.monotone_method == 'b') {
+    use_strict = options.monotone_method == 'E' || options.monotone_method == 'B';
+    if (use_strict) {
+        if (blend_polygon_is_xy_monotone_strict(&input, &is_xy_monotone) != SUCCESS) {
+            blend_polygon_free(&input);
+            return FAIL;
+        }
+    }
+
+    if (options.monotone_method == 'e' || options.monotone_method == 'b' ||
+        options.monotone_method == 'E' || options.monotone_method == 'B') {
         if (is_xy_monotone) {
-            printf("monotone: polygon is already xy-monotone\n");
+            printf("monotone: polygon is already %sxy-monotone\n", use_strict ? "strictly " : "");
             blend_polygon_free(&input);
             return SUCCESS;
         }
 
+        start = blend_elapsed_seconds();
         if (options.monotone_method == 'e') {
             BLEND_Report(BLEND_MSG_WARNING, "monotone: polygon is not xy-monotone; using envelope method\n");
             status = blend_polygon_xy_monotone_envelope(&input, &output);
@@ -373,10 +406,29 @@ int blend_monotone_module(int argc, char **argv)
                                                                        xmin, xmax, ymin, ymax,
                                                                        options.nx, options.ny);
         }
+        else if (options.monotone_method == 'E') {
+            BLEND_Report(BLEND_MSG_WARNING,
+                         "monotone: polygon is not strictly xy-monotone; using strict envelope method\n");
+            status = blend_polygon_xy_monotone_envelope_strict(&input, &output);
+        }
+        else if (options.monotone_method == 'B') {
+            BLEND_Report(BLEND_MSG_WARNING,
+                         "monotone: polygon is not strictly xy-monotone; using strict best IoU piecewise envelope method\n");
+            if (blend_polygon_bounds(&input, &xmin, &xmax, &ymin, &ymax) != SUCCESS) {
+                blend_polygon_free(&input);
+                return FAIL;
+            }
+            status = blend_polygon_xy_monotone_best_piecewise_envelope_strict(&input, &output,
+                                                                              xmin, xmax, ymin, ymax,
+                                                                              options.nx, options.ny);
+        }
         if (status != SUCCESS) {
             blend_polygon_free(&input);
             return FAIL;
         }
+        BLEND_Report(BLEND_MSG_TIMING,
+                     "monotone: converted polygon with -M%c in %.3f s\n",
+                     options.monotone_method, blend_elapsed_seconds() - start);
         BLEND_Report(BLEND_MSG_WARNING,
                      "%s: original number of vertices = %zu, final number of vertices = %zu.\n",
                      options.polygonfile != NULL ? options.polygonfile : "standard input",

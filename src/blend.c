@@ -21,7 +21,15 @@ static void blend_usage(void)
     printf("usage: blend [options]\n");
     printf("       blend <module name> [<module-options>]\n\n");
     printf("options:\n");
-    printf("  -V[level]           Select verbosity: q, e, w, t, i, c, d [w].\n");
+    printf("  -V[level], --verbose=<level>\n");
+    printf("     Select verbosity level [w]. Choose among q, e, w, t, i, c, and d:\n");
+    printf("       q  Quiet; suppress all diagnostic messages.\n");
+    printf("       e  Error messages only.\n");
+    printf("       w  Warnings and errors [Default].\n");
+    printf("       t  Timings, warnings, and errors.\n");
+    printf("       i  Informational messages, timings, warnings, and errors.\n");
+    printf("       c  Compatibility messages and all lower verbosity messages.\n");
+    printf("       d  Debug messages and all lower verbosity messages.\n");
     printf("  --help              List descriptions of available BLEND modules.\n");
     printf("  --show-citation     Show references for citing BLEND.\n");
     printf("  --show-modules      Show all module names.\n");
@@ -87,8 +95,8 @@ static void blend_help(void)
 
 static void blend_citation(void)
 {
-    printf("Ajala, R., Persaud, P., 2021. Effect of merging multiscale models on seismic wavefield predictions near the southern San Andreas fault. J. Geophys. Res. Solid Earth 126, 1-23.\n");
-    printf("Ajala, R., Persaud, P., 2022. Ground-motion evaluation of hybrid seismic velocity models. Seism. Record 2, 186-196.\n");
+    printf("Ajala, R., Persaud, P., 2021. Effect of merging multiscale models on seismic wavefield predictions near the southern San Andreas fault. Journal of Geophysical Research: Solid Earth 126, 1-23.\n");
+    printf("Ajala, R., Persaud, P., 2022. Ground-motion evaluation of hybrid seismic velocity models. The Seismic Record 2, 186-196.\n");
     printf("Ajala, R., Kolawole, F., Share, P.E., Sahakian, V., Delph, J.R., Hooft, E., He, B., 2025. Toward an accessible framework for synthesizing solid earth models across multiple scales. Seismological Society of America Annual Meeting, Baltimore, Maryland, USA.\n");
 }
 

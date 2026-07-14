@@ -771,6 +771,236 @@ static int blend_polygon_collect_traversal_sector(const polygon *poly, size_t st
     return SUCCESS;
 }
 
+typedef struct blend_polygon_path_candidate {
+    int valid;
+    size_t count;
+    size_t *indices;
+    vertex *points;
+} blend_polygon_path_candidate;
+
+static void blend_polygon_path_candidate_free(blend_polygon_path_candidate *candidate)
+{
+    if (candidate == NULL) {
+        return;
+    }
+
+    free(candidate->indices);
+    free(candidate->points);
+    candidate->indices = NULL;
+    candidate->points = NULL;
+    candidate->count = 0;
+    candidate->valid = 0;
+}
+
+static int blend_polygon_path_candidate_alloc(blend_polygon_path_candidate *candidate, size_t capacity)
+{
+    if (candidate == NULL) {
+        return FAIL;
+    }
+
+    memset(candidate, 0, sizeof(*candidate));
+    candidate->indices = (size_t *)calloc(capacity == 0 ? 1 : capacity, sizeof(*candidate->indices));
+    candidate->points = (vertex *)calloc(capacity == 0 ? 1 : capacity, sizeof(*candidate->points));
+    if (candidate->indices == NULL || candidate->points == NULL) {
+        blend_polygon_path_candidate_free(candidate);
+        BLEND_Report(BLEND_MSG_ERROR, "polygon: could not allocate traversal path candidate\n");
+        return FAIL;
+    }
+
+    return SUCCESS;
+}
+
+static int blend_polygon_collect_strict_path_candidate(const polygon *poly, size_t n_input,
+                                                       size_t start_index, size_t end_index, int step,
+                                                       vertex start, vertex end, double xmin, double xmax,
+                                                       double ymin, double ymax, int x_direction,
+                                                       int y_direction, double tolerance,
+                                                       blend_polygon_path_candidate *candidate)
+{
+    size_t index;
+    size_t guard = 0;
+
+    if (poly == NULL || candidate == NULL || poly->vertices == NULL || n_input == 0 ||
+        (step != 1 && step != -1)) {
+        return FAIL;
+    }
+
+    candidate->valid = 0;
+    candidate->count = 0;
+
+    if (start_index == end_index) {
+        candidate->valid = 1;
+        return SUCCESS;
+    }
+
+    index = start_index;
+    while (index != end_index) {
+        vertex point;
+
+        if (step > 0) {
+            index = (index + 1) % n_input;
+        }
+        else {
+            index = (index == 0) ? n_input - 1 : index - 1;
+        }
+        if (index == end_index) {
+            break;
+        }
+
+        point = poly->vertices[index];
+        if (blend_polygon_point_on_bbox_side(point, xmin, xmax, ymin, ymax, tolerance)) {
+            continue;
+        }
+        if (!blend_polygon_value_between_open(point.x, start.x, end.x, tolerance) ||
+            !blend_polygon_value_between_open(point.y, start.y, end.y, tolerance)) {
+            return SUCCESS;
+        }
+
+        candidate->indices[candidate->count] = index;
+        candidate->points[candidate->count] = point;
+        candidate->count++;
+
+        guard++;
+        if (guard > n_input) {
+            return FAIL;
+        }
+    }
+
+    if (candidate->count == 0) {
+        if (blend_polygon_vertices_equal(start, end, tolerance) ||
+            ((double)x_direction * (end.x - start.x) > tolerance &&
+             (double)y_direction * (end.y - start.y) > tolerance)) {
+            candidate->valid = 1;
+        }
+        return SUCCESS;
+    }
+
+    {
+        vertex *chain = NULL;
+        size_t i;
+        int ok;
+
+        chain = (vertex *)calloc(candidate->count + 2, sizeof(*chain));
+        if (chain == NULL) {
+            BLEND_Report(BLEND_MSG_ERROR, "polygon: could not allocate traversal path chain\n");
+            return FAIL;
+        }
+        chain[0] = start;
+        for (i = 0; i < candidate->count; i++) {
+            chain[i + 1] = candidate->points[i];
+        }
+        chain[candidate->count + 1] = end;
+
+        ok = blend_polygon_chain_is_strictly_monotone(chain, candidate->count + 2,
+                                                      x_direction, y_direction, tolerance);
+        free(chain);
+        candidate->valid = ok;
+    }
+
+    return SUCCESS;
+}
+
+static int blend_polygon_nonbbox_vertex_count(const polygon *poly, size_t n_input,
+                                              double xmin, double xmax,
+                                              double ymin, double ymax,
+                                              double tolerance, size_t *count)
+{
+    size_t i;
+
+    if (poly == NULL || count == NULL) {
+        return FAIL;
+    }
+
+    *count = 0;
+    for (i = 0; i < n_input; i++) {
+        if (!blend_polygon_point_on_bbox_side(poly->vertices[i], xmin, xmax, ymin, ymax, tolerance)) {
+            *count += 1;
+        }
+    }
+
+    return SUCCESS;
+}
+
+static int blend_polygon_choose_strict_path_candidates(const polygon *poly, size_t n_input,
+                                                       double xmin, double xmax,
+                                                       double ymin, double ymax,
+                                                       double tolerance,
+                                                       blend_polygon_path_candidate candidates[4][2],
+                                                       int selected[4])
+{
+    int a, b, c, d;
+    size_t nonbbox_count = 0;
+
+    if (blend_polygon_nonbbox_vertex_count(poly, n_input, xmin, xmax, ymin, ymax,
+                                           tolerance, &nonbbox_count) != SUCCESS) {
+        return FAIL;
+    }
+
+    for (a = 0; a < 2; a++) {
+        for (b = 0; b < 2; b++) {
+            for (c = 0; c < 2; c++) {
+                for (d = 0; d < 2; d++) {
+                    int choices[4];
+                    unsigned char *assigned = NULL;
+                    size_t assigned_count = 0;
+                    size_t i;
+                    int sector;
+                    int ok = 1;
+
+                    choices[0] = a;
+                    choices[1] = b;
+                    choices[2] = c;
+                    choices[3] = d;
+
+                    for (sector = 0; sector < 4; sector++) {
+                        if (!candidates[sector][choices[sector]].valid) {
+                            ok = 0;
+                            break;
+                        }
+                    }
+                    if (!ok) {
+                        continue;
+                    }
+
+                    assigned = (unsigned char *)calloc(n_input == 0 ? 1 : n_input, sizeof(*assigned));
+                    if (assigned == NULL) {
+                        BLEND_Report(BLEND_MSG_ERROR, "polygon: could not allocate traversal path assignments\n");
+                        return FAIL;
+                    }
+
+                    for (sector = 0; sector < 4 && ok; sector++) {
+                        blend_polygon_path_candidate *candidate = &candidates[sector][choices[sector]];
+
+                        for (i = 0; i < candidate->count; i++) {
+                            size_t index = candidate->indices[i];
+
+                            if (assigned[index]) {
+                                ok = 0;
+                                break;
+                            }
+                            assigned[index] = 1;
+                            assigned_count++;
+                        }
+                    }
+
+                    if (ok && assigned_count == nonbbox_count) {
+                        selected[0] = choices[0];
+                        selected[1] = choices[1];
+                        selected[2] = choices[2];
+                        selected[3] = choices[3];
+                        free(assigned);
+                        return SUCCESS;
+                    }
+
+                    free(assigned);
+                }
+            }
+        }
+    }
+
+    return FAIL;
+}
+
 int blend_polygon_from_array(polygon *poly, double **vertices, size_t n_vertices)
 {
     size_t i;
@@ -1172,6 +1402,238 @@ int blend_polygon_is_xy_monotone(const polygon *poly, int *is_xy_monotone)
     return SUCCESS;
 }
 
+int blend_polygon_is_xy_monotone_strict(const polygon *poly, int *is_xy_monotone)
+{
+    vertex *bottom = NULL, *left = NULL, *top = NULL, *right = NULL;
+    blend_polygon_path_candidate candidates[4][2];
+    double xmin, xmax, ymin, ymax;
+    double tolerance;
+    size_t n_input;
+    size_t bottom_count = 0, left_count = 0, top_count = 0, right_count = 0;
+    size_t i;
+    int is_regular_xy_monotone = 0;
+    int candidates_initialized = 0;
+    int selected[4] = {-1, -1, -1, -1};
+
+    if (is_xy_monotone == NULL) {
+        return FAIL;
+    }
+    *is_xy_monotone = 0;
+
+    if (blend_polygon_validate(poly) != SUCCESS) {
+        return FAIL;
+    }
+    if (blend_polygon_is_xy_monotone(poly, &is_regular_xy_monotone) != SUCCESS) {
+        return FAIL;
+    }
+    if (!is_regular_xy_monotone) {
+        return SUCCESS;
+    }
+    if (blend_polygon_bounds(poly, &xmin, &xmax, &ymin, &ymax) != SUCCESS) {
+        return FAIL;
+    }
+
+    tolerance = blend_polygon_coordinate_tolerance(poly);
+    n_input = poly->n_vertices;
+    if (n_input > 3 && blend_polygon_vertices_equal(poly->vertices[0], poly->vertices[n_input - 1], tolerance)) {
+        n_input--;
+    }
+
+    bottom = (vertex *)calloc(n_input, sizeof(*bottom));
+    left = (vertex *)calloc(n_input, sizeof(*left));
+    top = (vertex *)calloc(n_input, sizeof(*top));
+    right = (vertex *)calloc(n_input, sizeof(*right));
+    if (bottom == NULL || left == NULL || top == NULL || right == NULL) {
+        BLEND_Report(BLEND_MSG_ERROR, "polygon: could not allocate strict xy-monotone work arrays\n");
+        free(bottom);
+        free(left);
+        free(top);
+        free(right);
+        return FAIL;
+    }
+
+    memset(candidates, 0, sizeof(candidates));
+    for (i = 0; i < 8; i++) {
+        if (blend_polygon_path_candidate_alloc(&candidates[i / 2][i % 2], n_input) != SUCCESS) {
+            goto cleanup_fail;
+        }
+    }
+    candidates_initialized = 1;
+
+    for (i = 0; i < n_input; i++) {
+        vertex point = poly->vertices[i];
+
+        if (fabs(point.y - ymin) <= tolerance) bottom[bottom_count++] = point;
+        if (fabs(point.x - xmin) <= tolerance) left[left_count++] = point;
+        if (fabs(point.y - ymax) <= tolerance) top[top_count++] = point;
+        if (fabs(point.x - xmax) <= tolerance) right[right_count++] = point;
+    }
+
+    if (bottom_count > 0 && left_count > 0 && top_count > 0 && right_count > 0) {
+        vertex bottom_left, bottom_right, left_bottom, left_top;
+        vertex top_left, top_right, right_bottom, right_top;
+        size_t bottom_left_index = 0, bottom_right_index = 0;
+        size_t left_bottom_index = 0, left_top_index = 0;
+        size_t top_left_index = 0, top_right_index = 0;
+        size_t right_bottom_index = 0, right_top_index = 0;
+
+        qsort(bottom, bottom_count, sizeof(*bottom), blend_polygon_compare_vertex);
+        qsort(left, left_count, sizeof(*left), blend_polygon_compare_y_asc_x_asc);
+        qsort(top, top_count, sizeof(*top), blend_polygon_compare_vertex);
+        qsort(right, right_count, sizeof(*right), blend_polygon_compare_y_asc_x_asc);
+
+        bottom_left = bottom[0];
+        bottom_right = bottom[bottom_count - 1];
+        left_bottom = left[0];
+        left_top = left[left_count - 1];
+        top_left = top[0];
+        top_right = top[top_count - 1];
+        right_bottom = right[0];
+        right_top = right[right_count - 1];
+
+        if (blend_polygon_find_vertex(poly->vertices, n_input, bottom_left, tolerance,
+                                      &bottom_left_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, bottom_right, tolerance,
+                                      &bottom_right_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, left_bottom, tolerance,
+                                      &left_bottom_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, left_top, tolerance,
+                                      &left_top_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, top_left, tolerance,
+                                      &top_left_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, top_right, tolerance,
+                                      &top_right_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, right_bottom, tolerance,
+                                      &right_bottom_index) != SUCCESS ||
+            blend_polygon_find_vertex(poly->vertices, n_input, right_top, tolerance,
+                                      &right_top_index) != SUCCESS) {
+            goto cleanup;
+        }
+
+        if (blend_polygon_collect_strict_path_candidate(poly, n_input, bottom_left_index, left_bottom_index,
+                                                        1, bottom_left, left_bottom, xmin, xmax, ymin, ymax,
+                                                        -1, 1, tolerance, &candidates[0][0]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, bottom_left_index, left_bottom_index,
+                                                        -1, bottom_left, left_bottom, xmin, xmax, ymin, ymax,
+                                                        -1, 1, tolerance, &candidates[0][1]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, left_top_index, top_left_index,
+                                                        1, left_top, top_left, xmin, xmax, ymin, ymax,
+                                                        1, 1, tolerance, &candidates[1][0]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, left_top_index, top_left_index,
+                                                        -1, left_top, top_left, xmin, xmax, ymin, ymax,
+                                                        1, 1, tolerance, &candidates[1][1]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, right_top_index, top_right_index,
+                                                        1, right_top, top_right, xmin, xmax, ymin, ymax,
+                                                        -1, 1, tolerance, &candidates[2][0]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, right_top_index, top_right_index,
+                                                        -1, right_top, top_right, xmin, xmax, ymin, ymax,
+                                                        -1, 1, tolerance, &candidates[2][1]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, bottom_right_index, right_bottom_index,
+                                                        1, bottom_right, right_bottom, xmin, xmax, ymin, ymax,
+                                                        1, 1, tolerance, &candidates[3][0]) != SUCCESS ||
+            blend_polygon_collect_strict_path_candidate(poly, n_input, bottom_right_index, right_bottom_index,
+                                                        -1, bottom_right, right_bottom, xmin, xmax, ymin, ymax,
+                                                        1, 1, tolerance, &candidates[3][1]) != SUCCESS) {
+            goto cleanup_fail;
+        }
+
+        if (blend_polygon_choose_strict_path_candidates(poly, n_input, xmin, xmax, ymin, ymax,
+                                                        tolerance, candidates, selected) == SUCCESS) {
+            *is_xy_monotone = 1;
+        }
+    }
+
+cleanup:
+    if (candidates_initialized) {
+        for (i = 0; i < 8; i++) {
+            blend_polygon_path_candidate_free(&candidates[i / 2][i % 2]);
+        }
+    }
+    free(bottom);
+    free(left);
+    free(top);
+    free(right);
+    return SUCCESS;
+
+cleanup_fail:
+    if (candidates_initialized) {
+        for (i = 0; i < 8; i++) {
+            blend_polygon_path_candidate_free(&candidates[i / 2][i % 2]);
+        }
+    }
+    free(bottom);
+    free(left);
+    free(top);
+    free(right);
+    return FAIL;
+}
+
+static int blend_polygon_copy_candidate_in_source_order(const polygon *src, const polygon *candidate, polygon *dst)
+{
+    vertex *vertices = NULL;
+    size_t count = 0;
+    size_t capacity = 0;
+    size_t n_src, n_candidate;
+    double tolerance;
+    size_t i, j;
+    polygon tmp;
+
+    if (src == NULL || candidate == NULL || dst == NULL ||
+        src->vertices == NULL || candidate->vertices == NULL) {
+        return FAIL;
+    }
+
+    tolerance = fmax(blend_polygon_coordinate_tolerance(src),
+                     blend_polygon_coordinate_tolerance(candidate));
+    n_src = src->n_vertices;
+    n_candidate = candidate->n_vertices;
+    if (n_src > 3 && blend_polygon_vertices_equal(src->vertices[0], src->vertices[n_src - 1], tolerance)) {
+        n_src--;
+    }
+    if (n_candidate > 3 &&
+        blend_polygon_vertices_equal(candidate->vertices[0], candidate->vertices[n_candidate - 1], tolerance)) {
+        n_candidate--;
+    }
+
+    for (i = 0; i < n_src; i++) {
+        for (j = 0; j < n_candidate; j++) {
+            if (blend_polygon_vertices_equal(src->vertices[i], candidate->vertices[j], tolerance)) {
+                if (blend_polygon_append_clean(&vertices, &count, &capacity, src->vertices[i],
+                                               tolerance) != SUCCESS) {
+                    free(vertices);
+                    return FAIL;
+                }
+                break;
+            }
+        }
+    }
+
+    if (count < 3) {
+        free(vertices);
+        return FAIL;
+    }
+
+    tmp.n_vertices = count;
+    tmp.vertices = vertices;
+    {
+        blend_verbosity verbosity = blend_get_verbosity();
+        int validate_status;
+
+        blend_set_verbosity(BLEND_MSG_QUIET);
+        validate_status = blend_polygon_validate(&tmp);
+        blend_set_verbosity(verbosity);
+        if (validate_status != SUCCESS) {
+            free(vertices);
+            return FAIL;
+        }
+    }
+
+    blend_polygon_free(dst);
+    dst->n_vertices = tmp.n_vertices;
+    dst->vertices = tmp.vertices;
+    return SUCCESS;
+}
+
 int blend_polygon_xy_monotone_envelope(const polygon *src, polygon *dst)
 {
     polygon hull_poly = {0};
@@ -1274,11 +1736,96 @@ int blend_polygon_xy_monotone_envelope(const polygon *src, polygon *dst)
         return FAIL;
     }
 
+    {
+        polygon ordered = {0};
+
+        if (blend_polygon_copy_candidate_in_source_order(src, &hull_poly, &ordered) == SUCCESS &&
+            blend_polygon_is_xy_monotone(&ordered, &is_xy_monotone) == SUCCESS &&
+            is_xy_monotone) {
+            free(hull);
+            blend_polygon_free(dst);
+            dst->n_vertices = ordered.n_vertices;
+            dst->vertices = ordered.vertices;
+            free(points);
+            return SUCCESS;
+        }
+        blend_polygon_free(&ordered);
+    }
+
     blend_polygon_free(dst);
     dst->n_vertices = hull_poly.n_vertices;
     dst->vertices = hull_poly.vertices;
     free(points);
     return SUCCESS;
+}
+
+int blend_polygon_xy_monotone_envelope_strict(const polygon *src, polygon *dst)
+{
+    polygon envelope = {0};
+    int is_xy_monotone = 0;
+
+    if (src == NULL || dst == NULL || src == dst) {
+        return FAIL;
+    }
+    if (blend_polygon_validate(src) != SUCCESS) {
+        return FAIL;
+    }
+
+    if (blend_polygon_is_xy_monotone_strict(src, &is_xy_monotone) != SUCCESS) {
+        return FAIL;
+    }
+    if (is_xy_monotone) {
+        blend_polygon_free(dst);
+        return blend_polygon_copy(src, dst);
+    }
+
+    if (blend_polygon_xy_monotone_envelope(src, &envelope) != SUCCESS) {
+        return FAIL;
+    }
+    if (blend_polygon_is_xy_monotone_strict(&envelope, &is_xy_monotone) != SUCCESS ||
+        !is_xy_monotone) {
+        blend_polygon_free(&envelope);
+        return FAIL;
+    }
+
+    blend_polygon_free(dst);
+    dst->n_vertices = envelope.n_vertices;
+    dst->vertices = envelope.vertices;
+    return SUCCESS;
+}
+
+static int blend_polygon_candidate_is_xy_monotone(const polygon *candidate, int *is_xy_monotone)
+{
+    blend_verbosity verbosity;
+    int status;
+
+    if (candidate == NULL || is_xy_monotone == NULL) {
+        return FAIL;
+    }
+
+    verbosity = blend_get_verbosity();
+    blend_set_verbosity(BLEND_MSG_QUIET);
+    status = blend_polygon_is_xy_monotone(candidate, is_xy_monotone);
+    blend_set_verbosity(verbosity);
+
+    return status;
+}
+
+static int blend_polygon_candidate_is_xy_monotone_strict(const polygon *candidate, int *is_xy_monotone)
+{
+    blend_verbosity verbosity;
+    int status;
+
+    if (candidate == NULL || is_xy_monotone == NULL) {
+        return FAIL;
+    }
+
+    verbosity = blend_get_verbosity();
+    blend_set_verbosity(BLEND_MSG_QUIET);
+    status = blend_polygon_is_xy_monotone_strict(candidate, is_xy_monotone);
+    blend_set_verbosity(verbosity);
+
+    return status;
 }
 
 static int blend_polygon_xy_monotone_piecewise_envelope(const polygon *src, polygon *dst)
@@ -1342,9 +1889,8 @@ static int blend_polygon_xy_monotone_piecewise_envelope(const polygon *src, poly
     }
 
     if (bottom_count == 0 || left_count == 0 || top_count == 0 || right_count == 0) {
-        BLEND_Report(BLEND_MSG_WARNING,
-                     "polygon: piecewise envelope could not find all bounding-box sides; using full envelope\n");
-        status = blend_polygon_xy_monotone_envelope(src, dst);
+        BLEND_Report(BLEND_MSG_DEBUG,
+                     "polygon: piecewise envelope could not find all bounding-box sides\n");
         goto cleanup;
     }
 
@@ -1466,16 +2012,14 @@ static int blend_polygon_xy_monotone_piecewise_envelope(const polygon *src, poly
 
     tmp.n_vertices = output_count;
     tmp.vertices = output;
-    if (blend_polygon_validate(&tmp) != SUCCESS ||
-        blend_polygon_is_xy_monotone(&tmp, &is_xy_monotone) != SUCCESS ||
+    if (blend_polygon_candidate_is_xy_monotone(&tmp, &is_xy_monotone) != SUCCESS ||
         !is_xy_monotone) {
-        BLEND_Report(BLEND_MSG_WARNING,
-                     "polygon: piecewise envelope did not produce an xy-monotone polygon; using full envelope\n");
+        BLEND_Report(BLEND_MSG_DEBUG,
+                     "polygon: piecewise envelope did not produce an xy-monotone polygon\n");
         tmp.vertices = NULL;
         tmp.n_vertices = 0;
         free(output);
         output = NULL;
-        status = blend_polygon_xy_monotone_envelope(src, dst);
         goto cleanup;
     }
 
@@ -1679,8 +2223,7 @@ static int blend_polygon_traversal_piecewise_candidate(const polygon *src, int r
 
     tmp.n_vertices = output_count;
     tmp.vertices = output;
-    if (blend_polygon_validate(&tmp) != SUCCESS ||
-        blend_polygon_is_xy_monotone(&tmp, &is_xy_monotone) != SUCCESS ||
+    if (blend_polygon_candidate_is_xy_monotone(&tmp, &is_xy_monotone) != SUCCESS ||
         !is_xy_monotone) {
         tmp.vertices = NULL;
         tmp.n_vertices = 0;
@@ -1783,23 +2326,36 @@ static int blend_polygon_keep_highest_grid_iou_candidate(const polygon *src, pol
                                                          double ymin, double ymax,
                                                          int nx, int ny, double *best_iou)
 {
+    polygon ordered = {0};
     double iou;
+    int is_xy_monotone = 0;
 
     if (candidate == NULL || candidate->vertices == NULL || candidate->n_vertices < 3 ||
         best == NULL || best_iou == NULL || src == NULL) {
         return FAIL;
     }
 
-    if (blend_polygon_grid_iou(src, candidate, xmin, xmax, ymin, ymax, nx, ny, &iou) != SUCCESS) {
+    if (blend_polygon_copy_candidate_in_source_order(src, candidate, &ordered) != SUCCESS) {
+        return SUCCESS;
+    }
+    if (blend_polygon_candidate_is_xy_monotone(&ordered, &is_xy_monotone) != SUCCESS ||
+        !is_xy_monotone) {
+        blend_polygon_free(&ordered);
+        return SUCCESS;
+    }
+
+    if (blend_polygon_grid_iou(src, &ordered, xmin, xmax, ymin, ymax, nx, ny, &iou) != SUCCESS) {
+        blend_polygon_free(&ordered);
         return FAIL;
     }
 
     if (best->vertices == NULL || iou > *best_iou ||
         (fabs(iou - *best_iou) <= 1.0e-12 &&
-         candidate->n_vertices > best->n_vertices)) {
+         ordered.n_vertices > best->n_vertices)) {
         polygon copy = {0};
 
-        if (blend_polygon_copy(candidate, &copy) != SUCCESS) {
+        if (blend_polygon_copy(&ordered, &copy) != SUCCESS) {
+            blend_polygon_free(&ordered);
             return FAIL;
         }
         blend_polygon_free(best);
@@ -1808,6 +2364,55 @@ static int blend_polygon_keep_highest_grid_iou_candidate(const polygon *src, pol
         *best_iou = iou;
     }
 
+    blend_polygon_free(&ordered);
+    return SUCCESS;
+}
+
+static int blend_polygon_keep_highest_strict_grid_iou_candidate(const polygon *src, polygon *best,
+                                                                const polygon *candidate,
+                                                                double xmin, double xmax,
+                                                                double ymin, double ymax,
+                                                                int nx, int ny, double *best_iou)
+{
+    polygon ordered = {0};
+    double iou;
+    int is_xy_monotone = 0;
+
+    if (candidate == NULL || candidate->vertices == NULL || candidate->n_vertices < 3 ||
+        best == NULL || best_iou == NULL || src == NULL) {
+        return FAIL;
+    }
+
+    if (blend_polygon_copy_candidate_in_source_order(src, candidate, &ordered) != SUCCESS) {
+        return SUCCESS;
+    }
+    if (blend_polygon_candidate_is_xy_monotone_strict(&ordered, &is_xy_monotone) != SUCCESS ||
+        !is_xy_monotone) {
+        blend_polygon_free(&ordered);
+        return SUCCESS;
+    }
+
+    if (blend_polygon_grid_iou(src, &ordered, xmin, xmax, ymin, ymax, nx, ny, &iou) != SUCCESS) {
+        blend_polygon_free(&ordered);
+        return FAIL;
+    }
+
+    if (best->vertices == NULL || iou > *best_iou ||
+        (fabs(iou - *best_iou) <= 1.0e-12 &&
+         ordered.n_vertices > best->n_vertices)) {
+        polygon copy = {0};
+
+        if (blend_polygon_copy(&ordered, &copy) != SUCCESS) {
+            blend_polygon_free(&ordered);
+            return FAIL;
+        }
+        blend_polygon_free(best);
+        best->n_vertices = copy.n_vertices;
+        best->vertices = copy.vertices;
+        *best_iou = iou;
+    }
+
+    blend_polygon_free(&ordered);
     return SUCCESS;
 }
 
@@ -1821,6 +2426,9 @@ int blend_polygon_xy_monotone_best_piecewise_envelope(const polygon *src, polygo
     double best_iou = 0.0;
     int is_xy_monotone = 0;
     int reverse;
+    int candidate_count = 0;
+    double start;
+    size_t sample_count;
 
     if (src == NULL || dst == NULL || src == dst || nx < 1 || ny < 1 ||
         !isfinite(xmin) || !isfinite(xmax) || !isfinite(ymin) || !isfinite(ymax) ||
@@ -1839,8 +2447,15 @@ int blend_polygon_xy_monotone_best_piecewise_envelope(const polygon *src, polygo
         return blend_polygon_copy(src, dst);
     }
 
+    start = blend_elapsed_seconds();
+    sample_count = (size_t)nx * (size_t)ny;
+    BLEND_Report(BLEND_MSG_TIMING,
+                 "polygon: evaluating best IoU xy-monotone envelope candidates on %zu grid samples (%d x %d)\n",
+                 sample_count, nx, ny);
+
     for (reverse = 0; reverse <= 1; reverse++) {
         if (blend_polygon_traversal_piecewise_candidate(src, reverse, &candidate) == SUCCESS) {
+            candidate_count++;
             if (blend_polygon_keep_highest_grid_iou_candidate(src, &best, &candidate,
                                                               xmin, xmax, ymin, ymax, nx, ny,
                                                               &best_iou) != SUCCESS) {
@@ -1853,6 +2468,7 @@ int blend_polygon_xy_monotone_best_piecewise_envelope(const polygon *src, polygo
     }
 
     if (blend_polygon_xy_monotone_piecewise_envelope(src, &candidate) == SUCCESS) {
+        candidate_count++;
         if (blend_polygon_keep_highest_grid_iou_candidate(src, &best, &candidate,
                                                           xmin, xmax, ymin, ymax, nx, ny,
                                                           &best_iou) != SUCCESS) {
@@ -1864,6 +2480,7 @@ int blend_polygon_xy_monotone_best_piecewise_envelope(const polygon *src, polygo
     }
 
     if (blend_polygon_xy_monotone_envelope(src, &candidate) == SUCCESS) {
+        candidate_count++;
         if (blend_polygon_keep_highest_grid_iou_candidate(src, &best, &candidate,
                                                           xmin, xmax, ymin, ymax, nx, ny,
                                                           &best_iou) != SUCCESS) {
@@ -1881,6 +2498,97 @@ int blend_polygon_xy_monotone_best_piecewise_envelope(const polygon *src, polygo
     blend_polygon_free(dst);
     dst->n_vertices = best.n_vertices;
     dst->vertices = best.vertices;
+    BLEND_Report(BLEND_MSG_TIMING,
+                 "polygon: selected best IoU xy-monotone envelope from %d candidates in %.3f s (IoU = %.6f)\n",
+                 candidate_count, blend_elapsed_seconds() - start, best_iou);
+    return SUCCESS;
+}
+
+int blend_polygon_xy_monotone_best_piecewise_envelope_strict(const polygon *src, polygon *dst,
+                                                             double xmin, double xmax,
+                                                             double ymin, double ymax,
+                                                             int nx, int ny)
+{
+    polygon candidate = {0};
+    polygon best = {0};
+    double best_iou = 0.0;
+    int is_xy_monotone = 0;
+    int reverse;
+    int candidate_count = 0;
+    double start;
+    size_t sample_count;
+
+    if (src == NULL || dst == NULL || src == dst || nx < 1 || ny < 1 ||
+        !isfinite(xmin) || !isfinite(xmax) || !isfinite(ymin) || !isfinite(ymax) ||
+        xmin >= xmax || ymin >= ymax) {
+        return FAIL;
+    }
+    if (blend_polygon_validate(src) != SUCCESS) {
+        return FAIL;
+    }
+
+    if (blend_polygon_is_xy_monotone_strict(src, &is_xy_monotone) != SUCCESS) {
+        return FAIL;
+    }
+    if (is_xy_monotone) {
+        blend_polygon_free(dst);
+        return blend_polygon_copy(src, dst);
+    }
+
+    start = blend_elapsed_seconds();
+    sample_count = (size_t)nx * (size_t)ny;
+    BLEND_Report(BLEND_MSG_TIMING,
+                 "polygon: evaluating strict best IoU xy-monotone envelope candidates on %zu grid samples (%d x %d)\n",
+                 sample_count, nx, ny);
+
+    for (reverse = 0; reverse <= 1; reverse++) {
+        if (blend_polygon_traversal_piecewise_candidate(src, reverse, &candidate) == SUCCESS) {
+            candidate_count++;
+            if (blend_polygon_keep_highest_strict_grid_iou_candidate(src, &best, &candidate,
+                                                                     xmin, xmax, ymin, ymax, nx, ny,
+                                                                     &best_iou) != SUCCESS) {
+                blend_polygon_free(&candidate);
+                blend_polygon_free(&best);
+                return FAIL;
+            }
+            blend_polygon_free(&candidate);
+        }
+    }
+
+    if (blend_polygon_xy_monotone_piecewise_envelope(src, &candidate) == SUCCESS) {
+        candidate_count++;
+        if (blend_polygon_keep_highest_strict_grid_iou_candidate(src, &best, &candidate,
+                                                                 xmin, xmax, ymin, ymax, nx, ny,
+                                                                 &best_iou) != SUCCESS) {
+            blend_polygon_free(&candidate);
+            blend_polygon_free(&best);
+            return FAIL;
+        }
+        blend_polygon_free(&candidate);
+    }
+
+    if (blend_polygon_xy_monotone_envelope_strict(src, &candidate) == SUCCESS) {
+        candidate_count++;
+        if (blend_polygon_keep_highest_strict_grid_iou_candidate(src, &best, &candidate,
+                                                                 xmin, xmax, ymin, ymax, nx, ny,
+                                                                 &best_iou) != SUCCESS) {
+            blend_polygon_free(&candidate);
+            blend_polygon_free(&best);
+            return FAIL;
+        }
+        blend_polygon_free(&candidate);
+    }
+
+    if (best.vertices == NULL) {
+        return FAIL;
+    }
+
+    blend_polygon_free(dst);
+    dst->n_vertices = best.n_vertices;
+    dst->vertices = best.vertices;
+    BLEND_Report(BLEND_MSG_TIMING,
+                 "polygon: selected strict best IoU xy-monotone envelope from %d candidates in %.3f s (IoU = %.6f)\n",
+                 candidate_count, blend_elapsed_seconds() - start, best_iou);
     return SUCCESS;
 }
 

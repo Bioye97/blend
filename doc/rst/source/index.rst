@@ -1,13 +1,9 @@
 BLEND Documentation
 ===================
 
-BLEND localizes functions using one-dimensional intervals, two-dimensional
-polygons, and three-dimensional polygonal slabs on regular Cartesian grids. It
-is designed as both a C library and a command-line tool with GMT-style modules.
-
-.. raw:: html
-
-   <p><a class="reference external" href="_downloads/blend.pdf">Download this documentation as PDF</a></p>
+BLEND localizes functions in arbitrarily shaped domains on the regular Cartesian grid. 
+It is designed as both a C library and a suite of command-line tools. It currently supports 
+over 50 window taper functions in dimensions up to 3.
 
 .. toctree::
    :maxdepth: 2
@@ -15,6 +11,12 @@ is designed as both a C library and a command-line tool with GMT-style modules.
 
    quickstart
    installation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   examples/index
 
 .. toctree::
    :maxdepth: 2
@@ -36,23 +38,16 @@ is designed as both a C library and a command-line tool with GMT-style modules.
 
    api/index
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Examples
-
-   examples/index
-
 Citation
 --------
 
-If BLEND is useful in your work, please cite the relevant applications and
-method descriptions:
+If BLEND is useful in your work, please cite the following references:
 
 * Ajala, R., Persaud, P., 2021. Effect of merging multiscale models on seismic
-  wavefield predictions near the southern San Andreas fault. J. Geophys. Res.
-  Solid Earth 126, 1-23.
+  wavefield predictions near the southern San Andreas fault. Journal of Geophysical 
+  Research: Solid Earth 126, 1-23.
 * Ajala, R., Persaud, P., 2022. Ground-motion evaluation of hybrid seismic
-  velocity models. Seism. Record 2, 186-196.
+  velocity models. The Seismic Record 2, 186-196.
 * Ajala, R., Kolawole, F., Share, P.E., Sahakian, V., Delph, J.R., Hooft, E.,
   He, B., 2025. Toward an accessible framework for synthesizing solid earth
   models across multiple scales. Seismological Society of America Annual

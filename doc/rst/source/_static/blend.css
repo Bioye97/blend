@@ -1,0 +1,65 @@
+.blend-doc-select {
+  appearance: auto;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0;
+  color: #000;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 13.44px;
+  height: 32px;
+  margin: 0;
+  min-width: 72px;
+  padding: 6px 8px;
+}
+
+.blend-doc-select:focus {
+  outline: 1px solid #2980b9;
+  outline-offset: 1px;
+}
+
+.blend-sidebar-version {
+  margin: -0.4em 0 0.8em;
+  text-align: center;
+}
+
+.blend-breadcrumbs-aside {
+  align-items: center;
+  display: flex;
+  gap: 0.9em;
+  justify-content: flex-end;
+}
+
+.blend-format-version {
+  display: inline-block;
+  line-height: 1;
+}
+
+.rst-content #dependencies ul.simple {
+  list-style: disc;
+  margin-left: 24px;
+}
+
+.rst-content #dependencies ul.simple li {
+  display: list-item;
+  list-style: disc;
+}
+
+.rst-content #citation ul.simple {
+  list-style: disc;
+  margin-left: 24px;
+}
+
+.rst-content #citation ul.simple li {
+  display: list-item;
+  list-style: disc;
+}
+
+@media screen and (max-width: 768px) {
+  .blend-breadcrumbs-aside {
+    float: none;
+    justify-content: flex-start;
+    margin-top: 0.6em;
+    width: 100%;
+  }
+}

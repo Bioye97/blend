@@ -36,10 +36,16 @@ int blend_polygon_close(polygon *poly);
 int blend_polygon_map_to_grid(const polygon *src, double xmin, double xmax, double ymin, double ymax,
                               int nx, int ny, polygon *dst);
 int blend_polygon_is_xy_monotone(const polygon *poly, int *is_xy_monotone);
+int blend_polygon_is_xy_monotone_strict(const polygon *poly, int *is_xy_monotone);
 int blend_polygon_xy_monotone_envelope(const polygon *src, polygon *dst);
+int blend_polygon_xy_monotone_envelope_strict(const polygon *src, polygon *dst);
 int blend_polygon_xy_monotone_best_piecewise_envelope(const polygon *src, polygon *dst,
                                                       double xmin, double xmax,
                                                       double ymin, double ymax,
                                                       int nx, int ny);
+int blend_polygon_xy_monotone_best_piecewise_envelope_strict(const polygon *src, polygon *dst,
+                                                             double xmin, double xmax,
+                                                             double ymin, double ymax,
+                                                             int nx, int ny);
 
 #endif /* BLEND_POLYGON_H */

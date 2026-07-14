@@ -1,16 +1,6 @@
 window2d
 ========
 
-Synopsis
---------
-
-.. code-block:: text
-
-   blend window2d -R<xmin>/<xmax>/<ymin>/<ymax> -I<dx>[/<dy>]
-                  [-F<xfunction>[/<yfunction>]]
-                  [-T<rx1>/<rx2>/<ry1>/<ry2>]
-                  [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-M<method>] [-N]
-
 Description
 -----------
 
@@ -23,34 +13,29 @@ Blendfile rows contain:
 
    <polygonfile> <xfunction>/<yfunction> <rx1>/<rx2>/<ry1>/<ry2>
 
-Polygons must be valid, simple, and xy-monotone. If a polygon is not
-xy-monotone, use ``-Me`` or ``-Mb`` to refine it. BLEND reports the original
-and final vertex counts when refinement changes the polygon. Use ``-N`` with
-``-M`` to write each modified polygon to ``<polygonfile>_monotone``.
+Polygons must be valid, simple, and strictly xy-monotone, meaning that 
+the vertices should be strictly increasing as opposed to nondecreasing 
+in the usual definition of xy-monotonicity. use ``-ME`` or ``-MB`` to
+refine any input polygon to be strictly xy-monotone. BLEND reports the 
+original and final vertex counts when refinement changes the polygon. 
+Use ``-N`` with ``-M`` to write each modified polygon by inserting
+``_monotone`` before the file extension, for example 
+``south_america_monotone.txt`` for the monotone South America polygon 
+``south_america.txt``.
 
-Options
--------
+Usage
+-----
 
-``-R``
-   Set ``xmin/xmax/ymin/ymax``.
+.. raw:: html
 
-``-I``
-   Set ``dx[/dy]``. If ``dy`` is omitted, ``dy = dx``.
+   <span id="r"></span>
+   <span id="i"></span>
+   <span id="f"></span>
+   <span id="t"></span>
+   <span id="b"></span>
+   <span id="c"></span>
+   <span id="m"></span>
+   <span id="n"></span>
+   <span id="v"></span>
 
-``-F``
-   Set x and y window functions.
-
-``-T``
-   Set x and y taper ratios.
-
-``-B``
-   Read polygon supports from a blendfile.
-
-``-C``
-   Set overlap handling.
-
-``-M``
-   Convert non-xy-monotone polygons using ``e`` or ``b``.
-
-``-N``
-   Write modified polygons from ``-M`` to ``<polygonfile>_monotone``.
+.. blend-usage:: window2d

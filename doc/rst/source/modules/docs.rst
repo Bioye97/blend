@@ -1,35 +1,22 @@
 docs
 ====
 
-Synopsis
---------
-
-.. code-block:: text
-
-   blend docs [-Q] [-V[q|e|w|t|i|c|d]] <module-name> [<-option>]
-
 Description
 -----------
 
-``docs`` reports documentation for a BLEND module. The current implementation
-prints module documentation targets and usage text; the documentation tree added
-in this manual is the backend that can later be connected to option-specific
-lookup.
+``docs`` opens or reports HTML documentation for BLEND modules. By default it
+uses local HTML documentation when available and falls back to the BLEND
+documentation website. Use ``-Q`` to print the resolved documentation target
+without opening a viewer.
 
-Required Arguments
-------------------
+Usage
+-----
 
-``<module-name>``
-   One of ``docs``, ``monotone``, ``window1d``, ``window2d``, or ``window3d``.
+.. raw:: html
 
-Optional Arguments
-------------------
+   <span id="q"></span>
+   <span id="s"></span>
+   <span id="v"></span>
 
-``-Q``
-   Print the documentation target without opening a viewer.
+.. blend-usage:: docs
 
-``<-option>``
-   Reserved for option-specific documentation.
-
-``-V[level]``
-   Set verbosity.

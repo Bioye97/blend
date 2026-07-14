@@ -74,10 +74,9 @@ static void window2d_usage(FILE *fp)
     fprintf(fp, "REQUIRED ARGUMENTS:\n\n");
     fprintf(fp, "  -R<xmin>/<xmax>/<ymin>/<ymax>, --region=<xmin>/<xmax>/<ymin>/<ymax>\n");
     fprintf(fp, "     Specify the full 2-D output domain in user coordinates. The domain must\n");
-    fprintf(fp, "     satisfy xmin < xmax and ymin < ymax. Internally, each dimension is mapped\n");
-    fprintf(fp, "     to zero-based grid indices, but output always uses user coordinates. If an\n");
-    fprintf(fp, "     upper bound does not fall exactly on its increment, BLEND adjusts it upward\n");
-    fprintf(fp, "     to the next increment and reports a warning.\n\n");
+    fprintf(fp, "     satisfy xmin < xmax and ymin < ymax.  If an upper bound does not fall\n");
+    fprintf(fp, "     exactly on its increment, BLEND adjusts it upward to the next increment\n");
+    fprintf(fp, "     and reports a warning.\n\n");
 
     fprintf(fp, "  -I<dx>[/<dy>], --increment=<dx>[/<dy>]\n");
     fprintf(fp, "     Specify grid increments in user coordinates. Both increments must be\n");
@@ -114,19 +113,30 @@ static void window2d_usage(FILE *fp)
     fprintf(fp, "       p  Use the product of overlapping weights.\n\n");
 
     fprintf(fp, "  -M<method>, --monotone=<method>\n");
-    fprintf(fp, "     Select how non-xy-monotone blendfile polygons are converted before window\n");
-    fprintf(fp, "     assembly. If this option is omitted, non-xy-monotone polygons are rejected.\n");
-    fprintf(fp, "       e  Use the xy-monotone envelope method.\n");
-    fprintf(fp, "       b  Use the highest-IoU piecewise envelope from both traversal directions,\n");
+    fprintf(fp, "     Here only the 'strictly increasing' monotone condition is allowed.\n");
+    fprintf(fp, "     Select how non-strict xy-monotone blendfile polygons are converted before\n");
+    fprintf(fp, "     window assembly. If this option is omitted, polygons that are not strict\n");
+    fprintf(fp, "     enough for function localization are rejected. -MB is experimental and can\n");
+    fprintf(fp, "     produce irregular polygons that make function localization awkward.\n");
+    fprintf(fp, "       E  Use the strict xy-monotone envelope (i.e., convex hull) method.\n");
+    fprintf(fp, "       B  Use the strict highest-IoU piecewise envelope from both traversal directions,\n");
     fprintf(fp, "          sampled on the -R/-I grid.\n\n");
 
     fprintf(fp, "  -N, --write-monotone\n");
     fprintf(fp, "     When -M modifies a polygon, write the modified polygon to a file named\n");
-    fprintf(fp, "     <polygonfile>_monotone. If -N is omitted, modified polygons are used for\n");
+    fprintf(fp, "     by inserting _monotone before the file extension, for example\n");
+    fprintf(fp, "     south_america_monotone.txt. If -N is omitted, modified polygons are used for\n");
     fprintf(fp, "     weights but are not written.\n\n");
 
     fprintf(fp, "  -V[level], --verbose=<level>\n");
-    fprintf(fp, "     Select verbosity level [w]. Choose among q, e, w, t, i, c, and d.\n\n");
+    fprintf(fp, "     Select verbosity level [w]. Choose among q, e, w, t, i, c, and d:\n");
+    fprintf(fp, "       q  Quiet; suppress all diagnostic messages.\n");
+    fprintf(fp, "       e  Error messages only.\n");
+    fprintf(fp, "       w  Warnings and errors [Default].\n");
+    fprintf(fp, "       t  Timings, warnings, and errors.\n");
+    fprintf(fp, "       i  Informational messages, timings, warnings, and errors.\n");
+    fprintf(fp, "       c  Compatibility messages and all lower verbosity messages.\n");
+    fprintf(fp, "       d  Debug messages and all lower verbosity messages.\n\n");
 
     fprintf(fp, "  -?, --help\n");
     fprintf(fp, "     Print this usage message and exit.\n\n");
@@ -324,11 +334,11 @@ static int window2d_parse_clobber(const char *value, window2d_options *options)
 static int window2d_parse_monotone_method(const char *value, window2d_options *options)
 {
     if (value == NULL || value[0] == '\0' || value[1] != '\0') {
-        BLEND_Report(BLEND_MSG_ERROR, "window2d: monotone method must be one of e, b\n");
+        BLEND_Report(BLEND_MSG_ERROR, "window2d: monotone method must be one of E, B\n");
         return FAIL;
     }
 
-    if (value[0] != 'e' && value[0] != 'b') {
+    if (value[0] != 'E' && value[0] != 'B') {
         BLEND_Report(BLEND_MSG_ERROR, "window2d: unknown monotone method: %s\n", value);
         return FAIL;
     }
@@ -618,8 +628,19 @@ static int window2d_support_grid_size(double min, double max, double increment, 
 static int window2d_monotone_output_path(const char *polygon_file, char *path, size_t path_size)
 {
     int n;
+    const char *slash;
+    const char *dot;
+    size_t stem_len;
 
-    n = snprintf(path, path_size, "%s_monotone", polygon_file);
+    slash = strrchr(polygon_file, '/');
+    dot = strrchr(polygon_file, '.');
+    if (dot != NULL && (slash == NULL || dot > slash)) {
+        stem_len = (size_t)(dot - polygon_file);
+        n = snprintf(path, path_size, "%.*s_monotone%s", (int)stem_len, polygon_file, dot);
+    }
+    else {
+        n = snprintf(path, path_size, "%s_monotone", polygon_file);
+    }
     if (n < 0 || (size_t)n >= path_size) {
         BLEND_Report(BLEND_MSG_ERROR, "window2d: monotone polygon output path is too long for %s\n", polygon_file);
         return FAIL;
@@ -640,6 +661,241 @@ static int window2d_write_monotone_polygon(const char *polygon_file, const polyg
     }
 
     BLEND_Report(BLEND_MSG_WARNING, "window2d: wrote modified xy-monotone polygon to %s\n", path);
+    return SUCCESS;
+}
+
+static int window2d_append_snapped_vertex(vertex **vertices, size_t *count, size_t *capacity,
+                                          double x, double y)
+{
+    vertex *items;
+    size_t new_capacity;
+
+    if (*count > 0 &&
+        fabs((*vertices)[*count - 1].x - x) <= 1.0e-12 &&
+        fabs((*vertices)[*count - 1].y - y) <= 1.0e-12) {
+        return SUCCESS;
+    }
+
+    if (*count == *capacity) {
+        new_capacity = *capacity == 0 ? 16 : *capacity * 2;
+        items = (vertex *)realloc(*vertices, new_capacity * sizeof(**vertices));
+        if (items == NULL) {
+            BLEND_Report(BLEND_MSG_ERROR, "window2d: could not allocate local polygon vertices\n");
+            return FAIL;
+        }
+        *vertices = items;
+        *capacity = new_capacity;
+    }
+
+    (*vertices)[*count].x = x;
+    (*vertices)[*count].y = y;
+    *count += 1;
+    return SUCCESS;
+}
+
+static double window2d_snap_local_coordinate(double value, int max_index)
+{
+    double snapped = floor(value + 0.5);
+
+    if (fabs(value) < 1.0e-10) {
+        snapped = 0.0;
+    }
+    else if (fabs(value - (double)max_index) < 1.0e-10) {
+        snapped = (double)max_index;
+    }
+
+    if (snapped < 0.0) {
+        return 0.0;
+    }
+    if (snapped > (double)max_index) {
+        return (double)max_index;
+    }
+    return snapped;
+}
+
+static int window2d_polygon_geometry(const window2d_options *options, const polygon *poly,
+                                     const char *polygon_file,
+                                     double *xmin, double *xmax, double *ymin, double *ymax,
+                                     int *nx, int *ny)
+{
+    size_t i;
+
+    if (poly == NULL || poly->vertices == NULL || poly->n_vertices == 0 ||
+        xmin == NULL || xmax == NULL || ymin == NULL || ymax == NULL ||
+        nx == NULL || ny == NULL) {
+        return FAIL;
+    }
+
+    *xmin = poly->vertices[0].x;
+    *xmax = poly->vertices[0].x;
+    *ymin = poly->vertices[0].y;
+    *ymax = poly->vertices[0].y;
+
+    for (i = 0; i < poly->n_vertices; i++) {
+        double x = poly->vertices[i].x;
+        double y = poly->vertices[i].y;
+
+        if (x < options->xmin || x > options->xmax ||
+            y < options->ymin || y > options->ymax) {
+            BLEND_Report(BLEND_MSG_ERROR, "window2d: polygon %s has a vertex outside -R\n", polygon_file);
+            return FAIL;
+        }
+        if (x < *xmin) *xmin = x;
+        if (x > *xmax) *xmax = x;
+        if (y < *ymin) *ymin = y;
+        if (y > *ymax) *ymax = y;
+    }
+
+    if (*xmin >= *xmax || *ymin >= *ymax) {
+        BLEND_Report(BLEND_MSG_ERROR, "window2d: polygon %s has an invalid bounding box\n", polygon_file);
+        return FAIL;
+    }
+
+    return window2d_support_grid_size(*xmin, *xmax, options->dx, nx) == SUCCESS &&
+           window2d_support_grid_size(*ymin, *ymax, options->dy, ny) == SUCCESS
+               ? SUCCESS
+               : FAIL;
+}
+
+static int window2d_polygon_to_local_grid(const polygon *real_poly,
+                                          double xmin, double xmax,
+                                          double ymin, double ymax,
+                                          int nx, int ny, polygon *local_poly)
+{
+    vertex *vertices = NULL;
+    size_t count = 0;
+    size_t capacity = 0;
+    polygon tmp = {0};
+    size_t i;
+
+    if (real_poly == NULL || local_poly == NULL || nx < 2 || ny < 2 ||
+        xmin >= xmax || ymin >= ymax) {
+        return FAIL;
+    }
+
+    for (i = 0; i < real_poly->n_vertices; i++) {
+        double local_x = (real_poly->vertices[i].x - xmin) * (double)(nx - 1) / (xmax - xmin);
+        double local_y = (real_poly->vertices[i].y - ymin) * (double)(ny - 1) / (ymax - ymin);
+
+        local_x = window2d_snap_local_coordinate(local_x, nx - 1);
+        local_y = window2d_snap_local_coordinate(local_y, ny - 1);
+        if (window2d_append_snapped_vertex(&vertices, &count, &capacity, local_x, local_y) != SUCCESS) {
+            free(vertices);
+            return FAIL;
+        }
+    }
+
+    if (count > 3 &&
+        fabs(vertices[0].x - vertices[count - 1].x) <= 1.0e-12 &&
+        fabs(vertices[0].y - vertices[count - 1].y) <= 1.0e-12) {
+        count--;
+    }
+
+    tmp.n_vertices = count;
+    tmp.vertices = vertices;
+    if (blend_polygon_validate(&tmp) != SUCCESS) {
+        free(vertices);
+        return FAIL;
+    }
+
+    blend_polygon_free(local_poly);
+    local_poly->n_vertices = tmp.n_vertices;
+    local_poly->vertices = tmp.vertices;
+    return SUCCESS;
+}
+
+static int window2d_local_grid_to_real_polygon(const polygon *local_poly,
+                                               double xmin, double xmax,
+                                               double ymin, double ymax,
+                                               int nx, int ny, polygon *real_poly)
+{
+    polygon tmp = {0};
+    size_t i;
+
+    if (local_poly == NULL || real_poly == NULL || nx < 2 || ny < 2 ||
+        xmin >= xmax || ymin >= ymax) {
+        return FAIL;
+    }
+    if (blend_polygon_alloc(&tmp, local_poly->n_vertices) != SUCCESS) {
+        return FAIL;
+    }
+
+    for (i = 0; i < local_poly->n_vertices; i++) {
+        double x = xmin + local_poly->vertices[i].x * (xmax - xmin) / (double)(nx - 1);
+        double y = ymin + local_poly->vertices[i].y * (ymax - ymin) / (double)(ny - 1);
+
+        if (blend_polygon_set_vertex(&tmp, i, x, y) != SUCCESS) {
+            blend_polygon_free(&tmp);
+            return FAIL;
+        }
+    }
+
+    if (blend_polygon_validate(&tmp) != SUCCESS) {
+        blend_polygon_free(&tmp);
+        return FAIL;
+    }
+
+    blend_polygon_free(real_poly);
+    real_poly->n_vertices = tmp.n_vertices;
+    real_poly->vertices = tmp.vertices;
+    return SUCCESS;
+}
+
+static int window2d_build_support_from_local(const char *polygon_file,
+                                             const polygon *real_poly,
+                                             const polygon *local_poly,
+                                             double xmin, double xmax,
+                                             double ymin, double ymax,
+                                             int nx, int ny,
+                                             blend_window_function x_function,
+                                             blend_window_function y_function,
+                                             double rx1, double rx2,
+                                             double ry1, double ry2,
+                                             window2d_support *support)
+{
+    permuted_vertex pv;
+
+    if (real_poly == NULL || local_poly == NULL || support == NULL ||
+        real_poly->vertices == NULL || local_poly->vertices == NULL) {
+        return FAIL;
+    }
+
+    memset(support, 0, sizeof(*support));
+    memset(&pv, 0, sizeof(pv));
+
+    support->vertices = (vertex *)calloc(real_poly->n_vertices, sizeof(*support->vertices));
+    if (support->vertices == NULL) {
+        BLEND_Report(BLEND_MSG_ERROR, "window2d: could not allocate polygon support vertices\n");
+        return FAIL;
+    }
+    memcpy(support->vertices, real_poly->vertices, real_poly->n_vertices * sizeof(*support->vertices));
+    support->n_vertices = real_poly->n_vertices;
+    support->xmin = xmin;
+    support->xmax = xmax;
+    support->ymin = ymin;
+    support->ymax = ymax;
+    support->data.nx = nx;
+    support->data.ny = ny;
+    support->data.ratio_x1 = rx1;
+    support->data.ratio_x2 = rx2;
+    support->data.ratio_y1 = ry1;
+    support->data.ratio_y2 = ry2;
+    support->data.x_function = x_function;
+    support->data.y_function = y_function;
+
+    if (blend_window_set_polygon(&support->data, local_poly) != SUCCESS) {
+        BLEND_Report(BLEND_MSG_ERROR, "window2d: could not assign local polygon support\n");
+        window2d_support_clear(support);
+        return FAIL;
+    }
+
+    if (boundary_assembly(&support->data, &pv) != SUCCESS) {
+        BLEND_Report(BLEND_MSG_ERROR, "window2d: could not assemble boundary for polygon %s\n", polygon_file);
+        blend_permuted_vertex_free(&pv);
+        window2d_support_clear(support);
+        return FAIL;
+    }
+    blend_permuted_vertex_free(&pv);
     return SUCCESS;
 }
 
@@ -765,8 +1021,12 @@ static int window2d_parse_blendfile_line(const char *line, long line_number,
     char extra[2];
     polygon input_polygon = {0};
     polygon support_polygon = {0};
+    polygon local_input_polygon = {0};
+    polygon local_support_polygon = {0};
     blend_window_function x_function, y_function;
+    double xmin, xmax, ymin, ymax;
     double rx1, rx2, ry1, ry2;
+    int nx, ny;
     int is_xy_monotone = 0;
     int fields;
     int status;
@@ -796,39 +1056,79 @@ static int window2d_parse_blendfile_line(const char *line, long line_number,
         return FAIL;
     }
 
-    if (blend_polygon_is_xy_monotone(&input_polygon, &is_xy_monotone) != SUCCESS) {
+    if (window2d_polygon_geometry(options, &input_polygon, polygon_file,
+                                  &xmin, &xmax, &ymin, &ymax, &nx, &ny) != SUCCESS ||
+        window2d_polygon_to_local_grid(&input_polygon, xmin, xmax, ymin, ymax, nx, ny,
+                                       &local_input_polygon) != SUCCESS) {
         blend_polygon_free(&input_polygon);
         return FAIL;
     }
+
+    if (blend_polygon_is_xy_monotone_strict(&local_input_polygon, &is_xy_monotone) != SUCCESS) {
+        blend_polygon_free(&input_polygon);
+        blend_polygon_free(&local_input_polygon);
+        return FAIL;
+    }
     if (!is_xy_monotone) {
-        if (options->monotone_method != 'e' && options->monotone_method != 'b') {
+        if (options->monotone_method != 'E' && options->monotone_method != 'B') {
             BLEND_Report(BLEND_MSG_ERROR,
-                         "window2d: polygon %s is not xy-monotone; check -M if you want BLEND to refine it with -Me or -Mb\n",
+                         "window2d: grid-snapped polygon %s is not strict enough for boundary assembly; use -ME or -MB if you want BLEND to refine it\n",
                          polygon_file);
             blend_polygon_free(&input_polygon);
+            blend_polygon_free(&local_input_polygon);
             return FAIL;
         }
-        if (options->monotone_method == 'e') {
+        if (options->monotone_method == 'E') {
             BLEND_Report(BLEND_MSG_WARNING,
-                         "window2d: polygon %s is not xy-monotone; using its xy-monotone envelope from -Me\n",
+                         "window2d: grid-snapped polygon %s is not strict enough for boundary assembly; using its strict xy-monotone envelope from -ME\n",
                          polygon_file);
         }
-        else if (options->monotone_method == 'b') {
+        else if (options->monotone_method == 'B') {
             BLEND_Report(BLEND_MSG_WARNING,
-                         "window2d: polygon %s is not xy-monotone; using its best IoU piecewise xy-monotone envelope from -Mb\n",
+                         "window2d: grid-snapped polygon %s is not strict enough for boundary assembly; using its strict best IoU piecewise xy-monotone envelope from -MB\n",
                          polygon_file);
         }
     }
 
-    if ((options->monotone_method == 'b'
-             ? blend_polygon_xy_monotone_best_piecewise_envelope(
-                   &input_polygon, &support_polygon,
-                   options->xmin, options->xmax, options->ymin, options->ymax,
-                   options->nx, options->ny)
-             : blend_polygon_xy_monotone_envelope(&input_polygon, &support_polygon)) != SUCCESS) {
+    if (is_xy_monotone) {
+        status = blend_polygon_copy(&local_input_polygon, &local_support_polygon);
+    }
+    else {
+        status = options->monotone_method == 'B'
+                     ? blend_polygon_xy_monotone_best_piecewise_envelope_strict(
+                           &local_input_polygon, &local_support_polygon,
+                           0.0, (double)(nx - 1), 0.0, (double)(ny - 1), nx, ny)
+                     : blend_polygon_xy_monotone_envelope_strict(&local_input_polygon,
+                                                                 &local_support_polygon);
+    }
+    if (status != SUCCESS) {
         blend_polygon_free(&input_polygon);
+        blend_polygon_free(&local_input_polygon);
+        blend_polygon_free(&local_support_polygon);
         return FAIL;
     }
+
+    if (window2d_local_grid_to_real_polygon(&local_support_polygon, xmin, xmax, ymin, ymax,
+                                            nx, ny, &support_polygon) != SUCCESS) {
+        blend_polygon_free(&input_polygon);
+        blend_polygon_free(&local_input_polygon);
+        blend_polygon_free(&local_support_polygon);
+        return FAIL;
+    }
+
+    status = window2d_build_support_from_local(polygon_file, &support_polygon,
+                                               &local_support_polygon,
+                                               xmin, xmax, ymin, ymax, nx, ny,
+                                               x_function, y_function,
+                                               rx1, rx2, ry1, ry2, support);
+    if (status != SUCCESS) {
+        blend_polygon_free(&input_polygon);
+        blend_polygon_free(&support_polygon);
+        blend_polygon_free(&local_input_polygon);
+        blend_polygon_free(&local_support_polygon);
+        return FAIL;
+    }
+
     if (!is_xy_monotone) {
         BLEND_Report(BLEND_MSG_WARNING,
                      "%s: original number of vertices = %zu, final number of vertices = %zu.\n",
@@ -837,6 +1137,8 @@ static int window2d_parse_blendfile_line(const char *line, long line_number,
             if (window2d_write_monotone_polygon(polygon_file, &support_polygon) != SUCCESS) {
                 blend_polygon_free(&input_polygon);
                 blend_polygon_free(&support_polygon);
+                blend_polygon_free(&local_input_polygon);
+                blend_polygon_free(&local_support_polygon);
                 return FAIL;
             }
         }
@@ -847,10 +1149,10 @@ static int window2d_parse_blendfile_line(const char *line, long line_number,
         }
     }
 
-    status = window2d_build_support(options, polygon_file, support_polygon.vertices, support_polygon.n_vertices,
-                                    x_function, y_function, rx1, rx2, ry1, ry2, support);
     blend_polygon_free(&input_polygon);
     blend_polygon_free(&support_polygon);
+    blend_polygon_free(&local_input_polygon);
+    blend_polygon_free(&local_support_polygon);
     return status;
 }
 
@@ -1227,21 +1529,44 @@ int blend_window2d_module(int argc, char **argv)
     }
 
     if (options.blendfile != NULL) {
+        double start = blend_elapsed_seconds();
+
         if (window2d_read_blendfile(&options, &supports) != SUCCESS) {
             return FAIL;
         }
         support_list = &supports;
+        BLEND_Report(BLEND_MSG_TIMING,
+                     "window2d: prepared %zu blendfile supports in %.3f s\n",
+                     supports.count, blend_elapsed_seconds() - start);
     }
     else if (window2d_make_full_support(&options, &full_support) != SUCCESS) {
         return FAIL;
     }
 
     if (!isatty(STDIN_FILENO)) {
+        double start = blend_elapsed_seconds();
+
         status = window2d_write_queries(stdout, &options, &full_support, support_list, &n_queries);
+        if (status == SUCCESS && n_queries > 0) {
+            BLEND_Report(BLEND_MSG_TIMING,
+                         "window2d: evaluated %d query points in %.3f s\n",
+                         n_queries, blend_elapsed_seconds() - start);
+        }
     }
 
     if (status == SUCCESS && n_queries == 0) {
+        double start = blend_elapsed_seconds();
+        size_t node_count = (size_t)options.nx * (size_t)options.ny;
+
+        BLEND_Report(BLEND_MSG_TIMING,
+                     "window2d: writing %zu grid nodes (%d x %d)\n",
+                     node_count, options.nx, options.ny);
         status = window2d_write_grid(stdout, &options, &full_support, support_list);
+        if (status == SUCCESS) {
+            BLEND_Report(BLEND_MSG_TIMING,
+                         "window2d: wrote %zu grid nodes in %.3f s\n",
+                         node_count, blend_elapsed_seconds() - start);
+        }
     }
 
     window2d_support_clear(&full_support);

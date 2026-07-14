@@ -7,6 +7,8 @@
 #include "blend.h"
 
 #include <stdarg.h>
+#include <sys/time.h>
+#include <time.h>
 
 static int blend_verbosity_initialized = 0;
 static blend_verbosity blend_current_verbosity = BLEND_MSG_WARNING;
@@ -99,6 +101,27 @@ blend_verbosity blend_get_verbosity(void)
 {
     blend_init_verbosity();
     return blend_current_verbosity;
+}
+
+double blend_elapsed_seconds(void)
+{
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+        return (double)ts.tv_sec + (double)ts.tv_nsec / 1.0e9;
+    }
+#endif
+
+    {
+        struct timeval tv;
+
+        if (gettimeofday(&tv, NULL) == 0) {
+            return (double)tv.tv_sec + (double)tv.tv_usec / 1.0e6;
+        }
+    }
+
+    return (double)clock() / (double)CLOCKS_PER_SEC;
 }
 
 void BLEND_Report(blend_verbosity level, const char *format, ...)

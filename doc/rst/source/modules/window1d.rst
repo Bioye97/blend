@@ -1,47 +1,28 @@
 window1d
 ========
 
-Synopsis
---------
-
-.. code-block:: text
-
-   blend window1d -R<xmin>/<xmax> -I<dx> [-F<function>] [-T<r1>[/<r2>]]
-                  [-B<blendfile>] [-C<f|l|o|u|a|g|p>] [-V[q|e|w|t|i|c|d]]
-
 Description
 -----------
 
 ``window1d`` returns weights on a 1-D grid or at query coordinates read from
-standard input. Query coordinates do not need to land exactly on grid points;
+standard input. Query coordinates do not need to be exactly on grid points;
 BLEND uses linear interpolation from neighboring grid weights.
 
-Options
--------
+If ``-B`` is given, window supports are read from a blendfile and ``-F`` and
+``-T`` are ignored with a warning. Points outside all blendfile supports are
+assigned zero weight.
 
-``-R<xmin>/<xmax>``, ``--region=<xmin>/<xmax>``
-   Set the output domain.
+Usage
+-----
 
-``-I<dx>``, ``--increment=<dx>``
-   Set the grid increment.
+.. raw:: html
 
-``-F<function>``, ``--function=<function>``
-   Set the window taper function. Run ``blend --show-windows`` to list names.
+   <span id="r"></span>
+   <span id="i"></span>
+   <span id="f"></span>
+   <span id="t"></span>
+   <span id="b"></span>
+   <span id="c"></span>
+   <span id="v"></span>
 
-``-T<r1>[/<r2>]``, ``--taper_ratio=<r1>[/<r2>]``
-   Set beginning and ending taper ratios.
-
-``-B<blendfile>``, ``--blendfile=<blendfile>``
-   Read interval supports from a blendfile. Each row contains:
-   ``left right function r1/r2``.
-
-``-C<mode>``, ``--clobber=<mode>``
-   Set overlap handling for blendfile supports. Modes are ``f``, ``l``, ``o``,
-   ``u``, ``a``, ``g``, and ``p``.
-
-Example
--------
-
-.. code-block:: sh
-
-   blend window1d -R40/60 -I0.5 -Ftrapezoid -T0.2/0.2 > weights.txt
+.. blend-usage:: window1d

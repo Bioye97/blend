@@ -1,14 +1,6 @@
 blend
 =====
 
-Synopsis
---------
-
-.. code-block:: text
-
-   blend [options]
-   blend <module-name> [module-options]
-
 Description
 -----------
 
@@ -16,17 +8,12 @@ Description
 information and command-line usage. With a module name, it dispatches to the
 selected module.
 
-Options
--------
+Usage
+-----
 
-``--help``
-   Show program usage.
+.. raw:: html
 
-``--show-modules``
-   List available module names.
+   <span id="v"></span>
 
-``--show-windows``
-   List available window taper function names.
+.. blend-usage:: blend
 
-``--version``
-   Print the BLEND version.

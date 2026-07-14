@@ -117,7 +117,7 @@ To use Ninja:
    cmake .. -G Ninja
    cmake --build .
 
-This builds the BLEND static library, shared library, command-line program, and
+This builds the BLEND static library, shared library, command-line programs, and
 any optional targets enabled in ``cmake/ConfigUser.cmake``.
 
 Run Tests
@@ -211,27 +211,7 @@ install again:
    cmake --build . --target install
 
 If you use a local ``cmake/ConfigUser.cmake``, keep it in place so the updated
-installation uses the same install prefix and options as before. Depending on
-the installation location, you may need write permission for the install step.
-
-To update and run the test suite before installing, first enable tests in
-``cmake/ConfigUser.cmake``:
-
-.. code-block:: cmake
-
-   set (BLEND_BUILD_TESTS ON)
-
-Then rebuild and run ``ctest``:
-
-.. code-block:: sh
-
-   cd /path/to/blend
-   git pull
-   cd build
-   cmake ..
-   cmake --build .
-   ctest
-   cmake --build . --target install
+installation uses the same install prefix and options as before.
 
 Uninstall
 ---------
@@ -243,7 +223,8 @@ prefix to remove BLEND files:
 
    ./share/tools/blend_uninstall.sh
 
-Preview removals first with:
+You can also preview the files that would be removed without actually deleting them
+by adding the ``--dry-run`` option:
 
 .. code-block:: sh
 
@@ -263,4 +244,4 @@ Use the installed public header as:
 
 .. code-block:: c
 
-   #include <blend/blend.h>
+   #include <blend.h>

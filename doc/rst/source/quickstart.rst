@@ -19,18 +19,27 @@ needed, and configure from a separate build directory:
    cmake --build . --target install
 
 After installation, add the installation ``bin`` directory to your ``PATH`` and
-check the command:
+check the following commands:
+
+Show version
+------------
 
 .. code-block:: sh
 
    blend --version
 
-Show modules and windows
-------------------------
+Show modules
+------------
 
 .. code-block:: sh
 
    blend --show-modules
+
+Show windows
+------------
+
+.. code-block:: sh
+
    blend --show-windows
 
 Make a 1-D window
@@ -40,16 +49,15 @@ Make a 1-D window
 
    blend window1d -R0/10 -I1 -Fcosine -T0.2/0.2
 
-Query a 1-D window at arbitrary coordinates:
+Query a 1-D window at arbitrary coordinates
+-------------------------------------------
 
 .. code-block:: sh
 
    printf "2.5\n" | blend window1d -R0/10 -I1 -Fcosine -T0.2/0.2
 
-Make a 2-D polygon window
+Make a 2-D window
 -------------------------
-
-Create a polygon and a blendfile:
 
 .. code-block:: sh
 
@@ -57,9 +65,9 @@ Create a polygon and a blendfile:
    printf "polygon.txt cosine/cosine 0.2/0.2/0.2/0.2\n" > supports.txt
    blend window2d -R0/5/0/5 -I1 -Bsupports.txt
 
-If the polygon is not xy-monotone, use ``-Me`` or ``-Mb`` to let BLEND refine
-the support:
+If the polygon does not satisfy the xy-monotonicty requirement, use
+``-ME`` or ``-MB`` to let BLEND refine the support:
 
 .. code-block:: sh
 
-   blend window2d -R0/5/0/5 -I1 -Bsupports.txt -Mb
+   blend window2d -R0/5/0/5 -I1 -Bsupports.txt -MB
