@@ -65,7 +65,7 @@ Make a 2-D window
    printf "polygon.txt cosine/cosine 0.2/0.2/0.2/0.2\n" > supports.txt
    blend window2d -R0/5/0/5 -I1 -Bsupports.txt
 
-If the polygon does not satisfy the xy-monotonicty requirement, use
+If the polygon does not satisfy the xy-monotonicity requirement, use
 ``-ME`` or ``-MB`` to let BLEND refine the support:
 
 .. code-block:: sh
