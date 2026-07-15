@@ -93,7 +93,7 @@ Preview removals first with:
 ## License
 
 BLEND is licensed under the GNU Lesser General Public License, version 3
-or any later version. See `LICENSE.TXT`, `COPYING.LESSERv3`, and `COPYINGv3`
+or any later version. See `LICENSE`, `LICENSE.TXT`, `COPYING.LESSERv3`, and `COPYINGv3`
 for details.
 
 ## Citation

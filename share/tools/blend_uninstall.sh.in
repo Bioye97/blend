@@ -129,6 +129,7 @@ remove_path "${cmakedir}/blend-targets-relwithdebinfo.cmake"
 remove_path "${cmakedir}/blend-targets-minsizerel.cmake"
 
 remove_path "${docdir}/ChangeLog"
+remove_path "${docdir}/LICENSE"
 remove_path "${docdir}/LICENSE.TXT"
 remove_path "${docdir}/COPYINGv3"
 remove_path "${docdir}/COPYING.LESSERv3"
