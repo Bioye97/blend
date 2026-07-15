@@ -53,6 +53,9 @@ jobs:
       - name: Build HTML and PDF documentation
         run: cmake --build build --target docs
 
+      - name: Check documentation links
+        run: python .github/scripts/check_docs_links.py build/doc/html
+
       - name: Disable Jekyll processing
         run: touch build/doc/html/.nojekyll
 

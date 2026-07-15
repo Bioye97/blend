@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - devel-2.0
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DBLEND_BUILD_TESTS=ON \
+            -DBLEND_BUILD_EXAMPLES=ON \
+            -DBLEND_BUILD_DOCS=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Install
+        run: cmake --install build --prefix "${RUNNER_TEMP}/blend-install"
+
+      - name: Smoke test installed package
+        shell: bash
+        run: |
+          prefix="${RUNNER_TEMP}/blend-install"
+          "${prefix}/bin/blend" --version
+          "${prefix}/bin/blend" --show-modules
+          cat > "${RUNNER_TEMP}/blend-smoke.c" <<'EOF'
+          #include <blend/blend.h>
+
+          int main(void)
+          {
+              return SUCCESS == 0 ? 0 : 1;
+          }
+          EOF
+          cc "${RUNNER_TEMP}/blend-smoke.c" \
+            -I"${prefix}/include" \
+            -L"${prefix}/lib" \
+            -lblend \
+            -lm \
+            -o "${RUNNER_TEMP}/blend-smoke"
+          if [ "${RUNNER_OS}" = "macOS" ]; then
+            export DYLD_LIBRARY_PATH="${prefix}/lib:${DYLD_LIBRARY_PATH:-}"
+          else
+            export LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH:-}"
+          fi
+          "${RUNNER_TEMP}/blend-smoke"
+
+  docs:
+    name: Build HTML documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: doc/rst/requirements.txt
+
+      - name: Install documentation dependencies
+        run: python -m pip install -r doc/rst/requirements.txt
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DBLEND_BUILD_DOCS=ON \
+            -DBLEND_BUILD_EXAMPLES=OFF \
+            -DBLEND_BUILD_TESTS=OFF \
+            -DSPHINX_BUILD_EXECUTABLE="$(command -v sphinx-build)"
+
+      - name: Build HTML documentation
+        run: cmake --build build --target docs_html
+
+      - name: Check documentation links
+        run: python .github/scripts/check_docs_links.py build/doc/html

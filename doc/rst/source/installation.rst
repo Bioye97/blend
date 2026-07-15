@@ -244,4 +244,4 @@ Use the installed public header as:
 
 .. code-block:: c
 
-   #include <blend.h>
+   #include <blend/blend.h>
