@@ -7,6 +7,10 @@ cmake/ConfigUserAdvanced.cmake
 # Build and local install directories
 build/
 
+# Generated documentation
+doc/html/
+doc/latex/
+
 # Compiled objects and libraries
 *.o
 *.a
@@ -14,6 +18,13 @@ build/
 *.dylib
 *.dSYM/
 
-# Example outputs
-doc/examples/ex*/ex[0-9][0-9]
-doc/examples/ex*/ex[0-9][0-9].txt
+# Example build outputs
+doc/examples/ex*_api/ex*_api
+doc/examples/ex*_api/ex*_api.txt
+doc/examples/ex*_window*d/ex*_window*d.txt
+doc/examples/ex*_window*d/ex*_window*d_nonzero.txt
+doc/examples/ex*_window*d/ex*_window*d_grid.txt
+
+# Python
+__pycache__/
+*.pyc
