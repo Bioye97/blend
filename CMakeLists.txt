@@ -632,10 +632,14 @@ install(
 install(
   DIRECTORY doc/examples
   DESTINATION ${BLEND_INSTALL_DOCDIR}
+  USE_SOURCE_PERMISSIONS
   FILES_MATCHING
     PATTERN "*.c"
     PATTERN "*.md"
     PATTERN "*.gp"
+    PATTERN "*.sh"
+    PATTERN "*.blend"
+    PATTERN "*.txt"
     PATTERN "*.png"
 )
 
