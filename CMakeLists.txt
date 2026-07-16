@@ -625,17 +625,21 @@ install(
 )
 
 install(
-  FILES ChangeLog LICENSE.TXT COPYINGv3 COPYING.LESSERv3
+  FILES ChangeLog LICENSE NOTICE
   DESTINATION ${BLEND_INSTALL_DOCDIR}
 )
 
 install(
   DIRECTORY doc/examples
   DESTINATION ${BLEND_INSTALL_DOCDIR}
+  USE_SOURCE_PERMISSIONS
   FILES_MATCHING
     PATTERN "*.c"
     PATTERN "*.md"
     PATTERN "*.gp"
+    PATTERN "*.sh"
+    PATTERN "*.blend"
+    PATTERN "*.txt"
     PATTERN "*.png"
 )
 
