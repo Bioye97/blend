@@ -1,0 +1,69 @@
+2026-07-04  BLEND 2.0.0
+
+	Changes since version 1.1.2:
+
+	* Split window and taper functions from src/blend.c into
+	  src/blend_window.c without changing the public API.
+	* Split contribution evaluation from src/blend.c into
+	  src/blend_contribution.c without changing the public API.
+	* Renamed BLEND-defined typedefs ending in _t to POSIX-compliant names.
+	* Added a configured public version header generated from CMake metadata.
+	* Added public vertex and polygon data structures with ownership helpers.
+	* Updated polygon-based examples to construct support regions with the
+	  polygon API before copying them into the current window internals.
+	* Added the initial GMT-style source layout with a blend command driver
+	  and src module stubs for docs, simplify, monotone, window1d, window2d,
+	  and window3d.
+	* Moved public header sources into src and removed the extra source-tree
+	  include directory.
+	* Replaced string-based window function storage and preprocessor error
+	  code constants with public enum types.
+	* Added runtime diagnostics at the -Vt verbosity level for grid output,
+	  streamed queries, blendfile support preparation, and best-IoU monotone
+	  conversion.
+	* Renamed embedding_contribution to embedding_contribution3d and added
+	  embedding_contribution1d for 1D weights.
+	* Removed one-sided window functions and expanded taper-ratio handling
+	  to separate beginning and ending ratios for each dimension.
+
+2026-07-04  BLEND 1.1.2
+
+	Changes since version 1.0.1:
+
+	* Added CMake build and installation support for BLEND.
+	* Added GMT-style CMake configuration files:
+	  cmake/ConfigDefault.cmake and cmake/ConfigUserTemplate.cmake.
+	* Added installed CMake package files so downstream projects can use
+	  find_package(blend CONFIG REQUIRED).
+	* Installed the public header as include/blend/blend.h.
+	* Exported CMake targets BLEND::blend and BLEND::blend_static.
+	* Removed legacy Make/Autotools build files from the source tree.
+	* Updated README.md with GMT-style build, configuration, installation,
+	  test, package-consumption, and license instructions.
+	* Replaced legacy standalone tests with tests/blend_api_test.c.
+	* Added direct coverage for every public function declared in src/blend.h
+	  and implemented in src/blend.c.
+	* Registered the API test with CTest via BLEND_BUILD_TESTS.
+	* Licensed BLEND under the GNU Lesser General Public License version 3
+	  or any later version.
+	* Added LGPLv3 and GPLv3 license texts as COPYING.LESSERv3 and COPYINGv3.
+	* Installed license files with the package documentation.
+	* Added share/tools/blend_uninstall.sh to remove installed BLEND files.
+	* Added doc/examples/ex01 with a cosine taper window example and
+	  gnuplot plotting script.
+	* Added doc/examples/ex02 with a trapezoid taper window example and
+	  gnuplot plotting script.
+	* Added doc/examples/README.md with instructions shared by all examples.
+	* Added doc/examples/ex03 with a 2D triangular cosine taper example and
+	  gnuplot plotting script.
+	* Added doc/examples/ex04 with a 2D square cosine taper example and
+	  gnuplot plotting script.
+	* Added doc/examples/ex05 through doc/examples/ex10 for 2D cosine taper
+	  examples over pentagon, hexagon, heptagon, octagon, nonagon, and
+	  decagon supports.
+	* Added doc/examples/ex11 with a 2D 4-pointed isotoxal-star cosine
+	  taper example and gnuplot plotting script.
+	* Added doc/examples/ex12 with a 3D cosine taper example using the same
+	  4-pointed isotoxal-star support as ex11.
+	* Added rendered example output images to README.md and installed
+	  example documentation.

@@ -1,0 +1,38 @@
+{% extends "!layout.html" %}
+
+{% block sidebartitle %}
+
+{% if logo and theme_logo_only %}
+  <a href="{{ pathto(master_doc) }}">
+{% else %}
+  <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}
+{% endif %}
+
+{% if logo %}
+  <img src="{{ pathto('_static/' + logo, 1) }}" class="logo" alt="Logo"/>
+{% endif %}
+</a>
+
+{% if blend_versions %}
+  <div class="version blend-sidebar-version">
+    <select class="blend-doc-select blend-version-select" aria-label="Documentation version" title="Documentation version">
+      {% for label, url in blend_versions %}
+        <option value="{{ url }}"{% if label == blend_current_version %} selected="selected"{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+{% elif theme_display_version %}
+  {%- set nav_version = version %}
+  {% if READTHEDOCS and current_version %}
+    {%- set nav_version = current_version %}
+  {% endif %}
+  {% if nav_version %}
+    <div class="version">
+      {{ nav_version }}
+    </div>
+  {% endif %}
+{% endif %}
+
+{% include "searchbox.html" %}
+
+{% endblock %}

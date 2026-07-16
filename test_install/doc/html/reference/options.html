@@ -1,0 +1,728 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Common Options &mdash; BLEND Documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/blend.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/blend.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Window Functions" href="windows.html" />
+    <link rel="prev" title="window3d" href="../modules/window3d.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+
+  <a href="../index.html" class="icon icon-home"> BLEND
+
+
+
+</a>
+
+
+  <div class="version blend-sidebar-version">
+    <select class="blend-doc-select blend-version-select" aria-label="Documentation version" title="Documentation version">
+      
+        <option value="https://bioye97.github.io/blend/" selected="selected">devel-2.0</option>
+      
+    </select>
+  </div>
+
+
+
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#build-and-install-blend">Build and install BLEND</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#show-version">Show version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#show-modules">Show modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#show-windows">Show windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#make-a-1-d-window">Make a 1-D window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#query-a-1-d-window-at-arbitrary-coordinates">Query a 1-D window at arbitrary coordinates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#make-a-2-d-window">Make a 2-D window</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#download-blend">Download BLEND</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#run-tests">Run Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#build-documentation">Build Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#update-an-existing-installation">Update an Existing Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#uninstall">Uninstall</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#use-blend-from-another-cmake-project">Use BLEND from Another CMake Project</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#ex01-monotone">ex01_monotone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#ex02-window2d">ex02_window2d</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#ex03-window2d">ex03_window2d</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#ex04-window3d">ex04_window3d</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#ex05-window2d">ex05_window2d</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/index.html">Modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modules/blend.html">blend</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/blend.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/blend.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/docs.html">docs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/docs.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/docs.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/monotone.html">monotone</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/monotone.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/monotone.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/window1d.html">window1d</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/window1d.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/window1d.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/window2d.html">window2d</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/window2d.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/window2d.html#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/window3d.html">window3d</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/window3d.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/window3d.html#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Common Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="windows.html">Window Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="windows.html#available-names">Available Names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="windows.html#available-window-functions">Available Window Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="windows/boxcar.html">boxcar</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/boxcar.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/boxcar.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/boxcar.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/cosine.html">cosine</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/cosine.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/cosine.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/cosine.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/hann.html">hann</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/hann.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/hann.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/hann.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/tukey.html">tukey</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/tukey.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/tukey.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/tukey.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/trapezoid.html">trapezoid</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/trapezoid.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/trapezoid.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/trapezoid.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/linear.html">linear</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/linear.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/linear.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/linear.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/hamming.html">hamming</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/hamming.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/hamming.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/hamming.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/blackman.html">blackman</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackman.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackman.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackman.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/blackmanharris.html">blackmanharris</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackmanharris.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackmanharris.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackmanharris.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/welch.html">welch</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/welch.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/welch.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/welch.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/parzen.html">parzen</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/parzen.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/parzen.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/parzen.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/gaussian.html">gaussian</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/gaussian.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/gaussian.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/gaussian.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/smoothstep.html">smoothstep</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/smoothstep.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/smoothstep.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/smoothstep.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/smootherstep.html">smootherstep</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/smootherstep.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/smootherstep.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/smootherstep.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/exponential.html">exponential</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/exponential.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/exponential.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/exponential.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/sine.html">sine</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/sine.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/sine.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/sine.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/bohman.html">bohman</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/bohman.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/bohman.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/bohman.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/nuttall.html">nuttall</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/nuttall.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/nuttall.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/nuttall.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/kaiser.html">kaiser</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/kaiser.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/kaiser.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/kaiser.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/cauchy.html">cauchy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/cauchy.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/cauchy.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/cauchy.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/quadratic.html">quadratic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/quadratic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/quadratic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/quadratic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/cubic.html">cubic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/cubic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/cubic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/cubic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/poisson.html">poisson</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/poisson.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/poisson.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/poisson.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/bartlett.html">bartlett</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/bartlett.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/bartlett.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/bartlett.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/barthann.html">barthann</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/barthann.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/barthann.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/barthann.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/bartletthann.html">bartletthann</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/bartletthann.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/bartletthann.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/bartletthann.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/exactblackman.html">exactblackman</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/exactblackman.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/exactblackman.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/exactblackman.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/blackmannuttall.html">blackmannuttall</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackmannuttall.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackmannuttall.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/blackmannuttall.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/flattop.html">flattop</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/flattop.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/flattop.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/flattop.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/lanczos.html">lanczos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/lanczos.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/lanczos.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/lanczos.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/riesz.html">riesz</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/riesz.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/riesz.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/riesz.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/riemann.html">riemann</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/riemann.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/riemann.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/riemann.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/fejer.html">fejer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/fejer.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/fejer.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/fejer.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/connes.html">connes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/connes.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/connes.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/connes.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/hanningpoisson.html">hanningpoisson</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/hanningpoisson.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/hanningpoisson.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/hanningpoisson.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/kaiserbessel.html">kaiserbessel</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/kaiserbessel.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/kaiserbessel.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/kaiserbessel.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/plancktaper.html">plancktaper</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/plancktaper.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/plancktaper.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/plancktaper.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/quartic.html">quartic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/quartic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/quartic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/quartic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/quintic.html">quintic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/quintic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/quintic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/quintic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/septic.html">septic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/septic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/septic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/septic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/nonic.html">nonic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/nonic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/nonic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/nonic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/logistic.html">logistic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/logistic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/logistic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/logistic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/tanh.html">tanh</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/tanh.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/tanh.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/tanh.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/erf.html">erf</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/erf.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/erf.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/erf.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/arctan.html">arctan</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/arctan.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/arctan.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/arctan.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/gompertz.html">gompertz</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/gompertz.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/gompertz.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/gompertz.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/softsign.html">softsign</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/softsign.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/softsign.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/softsign.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/agnesi.html">agnesi</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/agnesi.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/agnesi.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/agnesi.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/inversequadratic.html">inversequadratic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/inversequadratic.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/inversequadratic.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/inversequadratic.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/inversemultiquadric.html">inversemultiquadric</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/inversemultiquadric.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/inversemultiquadric.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/inversemultiquadric.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/powerlaw.html">powerlaw</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/powerlaw.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/powerlaw.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/powerlaw.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/root.html">root</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/root.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/root.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/root.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/circular.html">circular</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/circular.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/circular.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/circular.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/sech.html">sech</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/sech.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/sech.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/sech.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/sech2.html">sech2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/sech2.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/sech2.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/sech2.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/student.html">student</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/student.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/student.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/student.html#source">Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="windows/laplace.html">laplace</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="windows/laplace.html#command">Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/laplace.html#figure">Figure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="windows/laplace.html#source">Source</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="windows.html#aliases">Aliases</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="polygons.html">Polygons</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="polygons.html#xy-monotone-requirement">xy-monotone requirement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polygons.html#conversion-methods">Conversion methods</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">C API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">C API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/polygon.html">Polygon API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/polygon.html#header">Header</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/polygon.html#data-types">Data Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/polygon.html#core-functions">Core Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/window.html">Window API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/window.html#header">Header</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/boundary.html">Boundary API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/boundary.html#header">Header</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/contribution.html">Contribution API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/contribution.html#header">Header</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/contribution.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utility API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/utils.html#header">Header</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/utils.html#interpolation">Interpolation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reporting.html">Reporting and Errors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/reporting.html#headers">Headers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reporting.html#errors">Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reporting.html#reporting">Reporting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/index.html#api-examples">API Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/index.html#ex01-api">ex01_api</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/index.html#ex02-api">ex02_api</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/index.html#ex03-api">ex03_api</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/index.html#ex04-api">ex04_api</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">BLEND</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content style-external-links">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Common Options</li>
+    
+    
+  <li class="wy-breadcrumbs-aside blend-breadcrumbs-aside">
+    <div class="blend-format-version">
+      <select class="blend-doc-select blend-format-select" aria-label="Documentation format" title="Documentation format">
+        <option value="#" selected="selected">HTML</option>
+        <option value="../_downloads/blend.pdf">PDF</option>
+      </select>
+    </div>
+    
+        
+        
+          <a href="https://github.com/Bioye97/blend/blob/devel-2.0/doc/rst/source/reference/options.rst" class="fa fa-github"> Edit on GitHub</a>
+        
+      
+    
+  </li>
+
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="common-options">
+<h1>Common Options<a class="headerlink" href="#common-options" title="Permalink to this heading">¶</a></h1>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">-R</span></code></dt><dd><p>Region. In 1-D this is <code class="docutils literal notranslate"><span class="pre">xmin/xmax</span></code>. In 2-D this is
+<code class="docutils literal notranslate"><span class="pre">xmin/xmax/ymin/ymax</span></code>. In 3-D this is
+<code class="docutils literal notranslate"><span class="pre">xmin/xmax/ymin/ymax/zmin/zmax</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-I</span></code></dt><dd><p>Grid increment. Optional dimensions inherit from the first increment.
+In 1-D, this is <code class="docutils literal notranslate"><span class="pre">dx</span></code>. In 2-D, this is <code class="docutils literal notranslate"><span class="pre">dx/dy</span></code>. In 3-D, this is <code class="docutils literal notranslate"><span class="pre">dx/dy/dz</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-F</span></code></dt><dd><p>Window taper functions for each dimension. Run <code class="docutils literal notranslate"><span class="pre">blend</span> <span class="pre">--show-windows</span></code> to list available
+names. In 1-D, this is <code class="docutils literal notranslate"><span class="pre">xfunction</span></code>. In 2-D, this is <code class="docutils literal notranslate"><span class="pre">xfunction/yfunction</span></code>. In 3-D, this is
+<code class="docutils literal notranslate"><span class="pre">xfunction/yfunction/zfunction</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-T</span></code></dt><dd><p>Taper ratios for beginning and ending sides of each dimension. In 1-D, this is <code class="docutils literal notranslate"><span class="pre">rx1/rx2</span></code>.
+In 2-D, this is <code class="docutils literal notranslate"><span class="pre">rx1/rx2/ry1/ry2</span></code>. In 3-D, this is <code class="docutils literal notranslate"><span class="pre">rx1/rx2/ry1/ry2/rz1/rz2</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-B</span></code></dt><dd><p>Blendfile input for multiple polygons/supports.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-C</span></code></dt><dd><p>Clobber mode for polygon overlap handling: first <code class="docutils literal notranslate"><span class="pre">f</span></code>, lowest <code class="docutils literal notranslate"><span class="pre">l</span></code>, last <code class="docutils literal notranslate"><span class="pre">o</span></code>, highest <code class="docutils literal notranslate"><span class="pre">u</span></code>,
+arithmetic average <code class="docutils literal notranslate"><span class="pre">a</span></code>, geometric average <code class="docutils literal notranslate"><span class="pre">g</span></code>, or product <code class="docutils literal notranslate"><span class="pre">p</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-M</span></code></dt><dd><p>Monotone conversion method for non-xy-monotone polygons. Options include <code class="docutils literal notranslate"><span class="pre">e</span></code>,
+<code class="docutils literal notranslate"><span class="pre">b</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, and <code class="docutils literal notranslate"><span class="pre">B</span></code>. Options <code class="docutils literal notranslate"><span class="pre">e</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> are only available for the <code class="docutils literal notranslate"><span class="pre">monotone</span></code>
+module and use the regular mathematical definition of xy-monotonicity, for
+<code class="docutils literal notranslate"><span class="pre">nondecreasing</span> <span class="pre">vertices</span></code>. Options <code class="docutils literal notranslate"><span class="pre">E</span></code> and <code class="docutils literal notranslate"><span class="pre">B</span></code> are the only available options for
+the <code class="docutils literal notranslate"><span class="pre">window2d</span></code> and <code class="docutils literal notranslate"><span class="pre">window3d</span></code> modules and use a stricter definition of xy-monotonicity,
+for <code class="docutils literal notranslate"><span class="pre">strictly</span> <span class="pre">increasing</span> <span class="pre">vertices</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-N</span></code></dt><dd><p>Write polygons modified by <code class="docutils literal notranslate"><span class="pre">-M</span></code> by inserting <code class="docutils literal notranslate"><span class="pre">_monotone</span></code> before the
+file extension, for example <code class="docutils literal notranslate"><span class="pre">south_america_monotone.txt</span></code> for <code class="docutils literal notranslate"><span class="pre">south_america.txt</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-V</span></code></dt><dd><p>Verbosity. Levels are quiet <code class="docutils literal notranslate"><span class="pre">q</span></code>, errors only <code class="docutils literal notranslate"><span class="pre">e</span></code>, warnings and errors <code class="docutils literal notranslate"><span class="pre">w</span></code>,
+timings, warnings, and errors <code class="docutils literal notranslate"><span class="pre">t</span></code>, informational messages, timings, warnings, and errors <code class="docutils literal notranslate"><span class="pre">i</span></code>,
+compatibility messages and all lower verbosity messages <code class="docutils literal notranslate"><span class="pre">c</span></code>, and debug messages and all
+lower verbosity messages <code class="docutils literal notranslate"><span class="pre">d</span></code>.</p>
+</dd>
+</dl>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="windows.html" class="btn btn-neutral float-right" title="Window Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../modules/window3d.html" class="btn btn-neutral float-left" title="window3d" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2026, Rasheed Ajala
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
