@@ -6,6 +6,7 @@ cmake/ConfigUserAdvanced.cmake
 
 # Build and local install directories
 build/
+test_install/
 
 # Generated documentation
 doc/html/
