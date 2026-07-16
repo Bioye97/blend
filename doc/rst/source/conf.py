@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 from pathlib import Path
 
@@ -35,16 +36,38 @@ html_theme_options = {
     "navigation_depth": 4,
     "style_external_links": True,
 }
+
+
+def _blend_versions():
+    default_versions = [
+        ("devel-2.0", "https://bioye97.github.io/blend/"),
+        ("2.0.0", "https://bioye97.github.io/blend/2.0.0/"),
+    ]
+    raw_versions = os.environ.get("BLEND_DOC_VERSIONS")
+    if not raw_versions:
+        return default_versions
+
+    try:
+        versions = json.loads(raw_versions)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("BLEND_DOC_VERSIONS must be JSON") from exc
+
+    parsed_versions = []
+    for item in versions:
+        if not isinstance(item, list) or len(item) != 2:
+            raise RuntimeError("BLEND_DOC_VERSIONS entries must be [label, url] pairs")
+        parsed_versions.append((str(item[0]), str(item[1])))
+    return parsed_versions
+
+
 html_context = {
     "display_github": True,
     "github_user": "Bioye97",
     "github_repo": "blend",
-    "github_version": "devel-2.0",
+    "github_version": os.environ.get("BLEND_DOC_GITHUB_VERSION", "devel-2.0"),
     "conf_py_path": "/doc/rst/source/",
-    "blend_current_version": "devel-2.0",
-    "blend_versions": [
-        ("devel-2.0", "https://bioye97.github.io/blend/"),
-    ],
+    "blend_current_version": os.environ.get("BLEND_DOC_CURRENT_VERSION", "devel-2.0"),
+    "blend_versions": _blend_versions(),
 }
 
 latex_documents = [

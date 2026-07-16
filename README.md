@@ -3,8 +3,8 @@
 [![CI](https://github.com/Bioye97/blend/actions/workflows/ci.yml/badge.svg)](https://github.com/Bioye97/blend/actions/workflows/ci.yml)
 [![Documentation](https://github.com/Bioye97/blend/actions/workflows/pages.yml/badge.svg)](https://github.com/Bioye97/blend/actions/workflows/pages.yml)
 [![Documentation](https://img.shields.io/badge/docs-latest-green.svg)](https://bioye97.github.io/blend/)
-[![GitHub release](https://img.shields.io/github/v/release/Bioye97/blend)](https://github.com/Bioye97/blend/releases)
-[![License](https://img.shields.io/github/license/Bioye97/blend)](https://github.com/Bioye97/blend)
+[![GitHub release](https://img.shields.io/github/v/tag/Bioye97/blend?label=release&sort=semver)](https://github.com/Bioye97/blend/releases/tag/v2.0.0)
+[![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
 
 ## What is BLEND?
 

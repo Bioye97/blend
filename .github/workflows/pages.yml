@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - devel-2.0
+      - master
   workflow_dispatch:
 
 permissions:
@@ -22,6 +23,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Define documentation versions
+        run: |
+          {
+            echo 'BLEND_DOC_VERSIONS<<EOF'
+            echo '[["devel-2.0","https://bioye97.github.io/blend/"],["2.0.0","https://bioye97.github.io/blend/2.0.0/"]]'
+            echo 'EOF'
+          } >> "${GITHUB_ENV}"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -42,22 +51,46 @@ jobs:
             texlive-latex-extra \
             texlive-latex-recommended
 
-      - name: Configure CMake
+      - name: Configure development documentation
         run: |
-          cmake -S . -B build \
+          cmake -S . -B build-devel \
             -DBLEND_BUILD_DOCS=ON \
             -DBLEND_BUILD_EXAMPLES=OFF \
             -DBLEND_BUILD_TESTS=OFF \
             -DSPHINX_BUILD_EXECUTABLE="$(command -v sphinx-build)"
 
-      - name: Build HTML and PDF documentation
-        run: cmake --build build --target docs
+      - name: Build development documentation
+        env:
+          BLEND_DOC_CURRENT_VERSION: devel-2.0
+          BLEND_DOC_GITHUB_VERSION: devel-2.0
+        run: cmake --build build-devel --target docs
+
+      - name: Configure 2.0.0 documentation
+        run: |
+          cmake -S . -B build-2.0.0 \
+            -DBLEND_BUILD_DOCS=ON \
+            -DBLEND_BUILD_EXAMPLES=OFF \
+            -DBLEND_BUILD_TESTS=OFF \
+            -DSPHINX_BUILD_EXECUTABLE="$(command -v sphinx-build)"
+
+      - name: Build 2.0.0 documentation
+        env:
+          BLEND_DOC_CURRENT_VERSION: 2.0.0
+          BLEND_DOC_GITHUB_VERSION: v2.0.0
+        run: cmake --build build-2.0.0 --target docs
+
+      - name: Assemble documentation site
+        run: |
+          cmake -E make_directory build/site
+          cmake -E copy_directory build-devel/doc/html build/site
+          cmake -E make_directory build/site/2.0.0
+          cmake -E copy_directory build-2.0.0/doc/html build/site/2.0.0
 
       - name: Check documentation links
-        run: python .github/scripts/check_docs_links.py build/doc/html
+        run: python .github/scripts/check_docs_links.py build/site
 
       - name: Disable Jekyll processing
-        run: touch build/doc/html/.nojekyll
+        run: touch build/site/.nojekyll
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
@@ -65,7 +98,7 @@ jobs:
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: build/doc/html
+          path: build/site
 
   deploy:
     name: Deploy documentation
