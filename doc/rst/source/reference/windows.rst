@@ -2,7 +2,7 @@ Window Functions
 ================
 
 BLEND window functions are point evaluators. A function is evaluated at the
-requested grid point or interpolation neighbor; BLEND does not need to build
+requested grid point or interpolation neighbor. BLEND does not need to build
 an entire window array before responding to a query.
 
 Available Names

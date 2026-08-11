@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - devel-2.0
-      - main
+      - master
   pull_request:
   workflow_dispatch:
 

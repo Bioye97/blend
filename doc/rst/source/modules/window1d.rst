@@ -5,7 +5,7 @@ Description
 -----------
 
 ``window1d`` returns weights on a 1-D grid or at query coordinates read from
-standard input. Query coordinates do not need to be exactly on grid points;
+standard input. Query coordinates do not need to be exactly on grid points.
 BLEND uses linear interpolation from neighboring grid weights.
 
 If ``-B`` is given, window supports are read from a blendfile and ``-F`` and
