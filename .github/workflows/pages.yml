@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - devel-2.0
-      - master
   workflow_dispatch:
 
 permissions:
@@ -20,17 +19,25 @@ jobs:
   build:
     name: Build documentation
     runs-on: ubuntu-latest
+    env:
+      BLEND_DOC_VERSIONS: '[["devel-2.0","https://bioye97.github.io/blend/"],["2.0.0","https://bioye97.github.io/blend/2.0.0/"]]'
     steps:
-      - name: Checkout
+      - name: Checkout BLEND development source
         uses: actions/checkout@v6
+        with:
+          ref: devel-2.0
 
-      - name: Define documentation versions
+      - name: Checkout BLEND 2.0.0 source
+        uses: actions/checkout@v6
+        with:
+          repository: Bioye97/blend
+          ref: v2.0.0
+          path: _versions/blend-2.0.0
+
+      - name: Add version selector support to BLEND 2.0.0
         run: |
-          {
-            echo 'BLEND_DOC_VERSIONS<<EOF'
-            echo '[["devel-2.0","https://bioye97.github.io/blend/"],["2.0.0","https://bioye97.github.io/blend/2.0.0/"]]'
-            echo 'EOF'
-          } >> "${GITHUB_ENV}"
+          cp doc/rst/source/conf.py _versions/blend-2.0.0/doc/rst/source/conf.py
+          cp doc/rst/source/_static/blend.js _versions/blend-2.0.0/doc/rst/source/_static/blend.js
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -67,7 +74,7 @@ jobs:
 
       - name: Configure 2.0.0 documentation
         run: |
-          cmake -S . -B build-2.0.0 \
+          cmake -S _versions/blend-2.0.0 -B build-2.0.0 \
             -DBLEND_BUILD_DOCS=ON \
             -DBLEND_BUILD_EXAMPLES=OFF \
             -DBLEND_BUILD_TESTS=OFF \
