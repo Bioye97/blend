@@ -905,6 +905,61 @@ static int test_boundary_assembly_and_contribution(void)
     return SUCCESS;
 }
 
+static int test_irregular_xy_monotone_scanlines(void)
+{
+    const double raw[][2] = {
+        {-116.036489302, 32.7468972727},
+        {-115.897830305, 32.6176071636},
+        {-115.675627030, 32.6197869057},
+        {-115.376887965, 32.9190953624},
+        {-115.448025885, 33.3363316320},
+        {-115.641389745, 33.3298816686}
+    };
+    const double xmin = -116.036489302, xmax = -115.376887965;
+    const double ymin = 32.6176071636, ymax = 33.3363316320;
+    window data = {0};
+    polygon poly = {0};
+    permuted_vertex boundary = {0};
+    double lower_weight, upper_weight;
+    int i;
+
+    data.nx = 331;
+    data.ny = 360;
+    data.ratio_x1 = data.ratio_x2 = 0.2;
+    data.ratio_y1 = data.ratio_y2 = 0.2;
+    data.x_function = data.y_function = WFUNC_COSINE;
+    ASSERT_EQ_INT(blend_polygon_alloc(&poly, 6), SUCCESS);
+    for (i = 0; i < 6; i++) {
+        double x = (raw[i][0] - xmin) * (double)(data.nx - 1) / (xmax - xmin);
+        double y = (raw[i][1] - ymin) * (double)(data.ny - 1) / (ymax - ymin);
+        ASSERT_EQ_INT(blend_polygon_set_vertex(&poly, (size_t)i, x, y), SUCCESS);
+    }
+    ASSERT_EQ_INT(blend_window_set_polygon(&data, &poly), SUCCESS);
+    ASSERT_EQ_INT(boundary_assembly(&data, &boundary), SUCCESS);
+
+    for (i = 0; i < data.ny; i++) {
+        ASSERT_TRUE(data.nnx1[i] >= 0 && data.nnx1[i] < data.nx);
+        ASSERT_TRUE(data.nnx2[i] >= 0 && data.nnx2[i] < data.nx);
+        ASSERT_TRUE(data.nnx1[i] <= data.nnx2[i]);
+    }
+    for (i = 0; i < data.nx; i++) {
+        ASSERT_TRUE(data.nny1[i] >= 0 && data.nny1[i] < data.ny);
+        ASSERT_TRUE(data.nny2[i] >= 0 && data.nny2[i] < data.ny);
+        ASSERT_TRUE(data.nny1[i] <= data.nny2[i]);
+    }
+
+    ASSERT_EQ_INT(embedding_contribution2d(168, 149, &data), SUCCESS);
+    lower_weight = data.contribution;
+    ASSERT_EQ_INT(embedding_contribution2d(168, 150, &data), SUCCESS);
+    upper_weight = data.contribution;
+    ASSERT_TRUE(fabs(lower_weight - upper_weight) < 0.2);
+
+    blend_permuted_vertex_free(&boundary);
+    blend_window_boundary_clear(&data);
+    blend_polygon_free(&poly);
+    return SUCCESS;
+}
+
 static int test_linear_interpolation(void)
 {
     double value;
@@ -1018,6 +1073,7 @@ int main(void)
     ASSERT_EQ_INT(test_assembly_helpers_with_quadrant_vertices(), SUCCESS);
     ASSERT_EQ_INT(test_hanging_sweep(), SUCCESS);
     ASSERT_EQ_INT(test_boundary_assembly_and_contribution(), SUCCESS);
+    ASSERT_EQ_INT(test_irregular_xy_monotone_scanlines(), SUCCESS);
     ASSERT_EQ_INT(test_linear_interpolation(), SUCCESS);
     ASSERT_EQ_INT(test_step_vector_functions(), SUCCESS);
 
