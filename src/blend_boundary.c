@@ -2290,36 +2290,139 @@ int maximum_columnstep(window *data, permuted_vertex *vertex) {
     return SUCCESS;
 }
 
+static void boundary_update_range(double value, double *minimum, double *maximum, int *found)
+{
+    if (!*found) {
+        *minimum = *maximum = value;
+        *found = 1;
+        return;
+    }
+    if (value < *minimum) *minimum = value;
+    if (value > *maximum) *maximum = value;
+}
+
+static int boundary_scanline_steps(window *data)
+{
+    const double tolerance = boundary_coordinate_tolerance(data);
+    int x, y, i;
+
+    free(data->nnx1);
+    free(data->nnx2);
+    free(data->nny1);
+    free(data->nny2);
+    data->nnx1 = (int *)calloc((size_t)data->ny, sizeof(*data->nnx1));
+    data->nnx2 = (int *)calloc((size_t)data->ny, sizeof(*data->nnx2));
+    data->nny1 = (int *)calloc((size_t)data->nx, sizeof(*data->nny1));
+    data->nny2 = (int *)calloc((size_t)data->nx, sizeof(*data->nny2));
+    if (data->nnx1 == NULL || data->nnx2 == NULL ||
+        data->nny1 == NULL || data->nny2 == NULL) {
+        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not allocate scanline stepping vectors\n");
+        return FAIL;
+    }
+
+    for (y = 0; y < data->ny; y++) {
+        double minimum = 0.0, maximum = 0.0;
+        int found = 0;
+
+        for (i = 0; i < data->row_size; i++) {
+            const double *a = data->vertices[i];
+            const double *b = data->vertices[(i + 1) % data->row_size];
+            double dy = b[1] - a[1];
+
+            if (fabs(dy) <= tolerance) {
+                if (fabs((double)y - a[1]) <= tolerance) {
+                    boundary_update_range(a[0], &minimum, &maximum, &found);
+                    boundary_update_range(b[0], &minimum, &maximum, &found);
+                }
+            }
+            else if ((double)y >= fmin(a[1], b[1]) - tolerance &&
+                     (double)y <= fmax(a[1], b[1]) + tolerance) {
+                double t = ((double)y - a[1]) / dy;
+                double intersection;
+
+                if (t < -tolerance || t > 1.0 + tolerance) continue;
+                if (t < 0.0) t = 0.0;
+                if (t > 1.0) t = 1.0;
+                intersection = a[0] + t * (b[0] - a[0]);
+                boundary_update_range(intersection, &minimum, &maximum, &found);
+            }
+        }
+        if (!found) {
+            BLEND_Report(BLEND_MSG_ERROR, "boundary: polygon does not intersect row %d\n", y);
+            return FAIL;
+        }
+        data->nnx1[y] = (int)floor(minimum + tolerance);
+        data->nnx2[y] = (int)ceil(maximum - tolerance);
+        if (data->nnx1[y] < 0) data->nnx1[y] = 0;
+        if (data->nnx2[y] >= data->nx) data->nnx2[y] = data->nx - 1;
+        if (data->nnx1[y] > data->nnx2[y]) data->nnx1[y] = data->nnx2[y];
+    }
+
+    for (x = 0; x < data->nx; x++) {
+        double minimum = 0.0, maximum = 0.0;
+        int found = 0;
+
+        for (i = 0; i < data->row_size; i++) {
+            const double *a = data->vertices[i];
+            const double *b = data->vertices[(i + 1) % data->row_size];
+            double dx = b[0] - a[0];
+
+            if (fabs(dx) <= tolerance) {
+                if (fabs((double)x - a[0]) <= tolerance) {
+                    boundary_update_range(a[1], &minimum, &maximum, &found);
+                    boundary_update_range(b[1], &minimum, &maximum, &found);
+                }
+            }
+            else if ((double)x >= fmin(a[0], b[0]) - tolerance &&
+                     (double)x <= fmax(a[0], b[0]) + tolerance) {
+                double t = ((double)x - a[0]) / dx;
+                double intersection;
+
+                if (t < -tolerance || t > 1.0 + tolerance) continue;
+                if (t < 0.0) t = 0.0;
+                if (t > 1.0) t = 1.0;
+                intersection = a[1] + t * (b[1] - a[1]);
+                boundary_update_range(intersection, &minimum, &maximum, &found);
+            }
+        }
+        if (!found) {
+            BLEND_Report(BLEND_MSG_ERROR, "boundary: polygon does not intersect column %d\n", x);
+            return FAIL;
+        }
+        data->nny1[x] = (int)floor(minimum + tolerance);
+        data->nny2[x] = (int)ceil(maximum - tolerance);
+        if (data->nny1[x] < 0) data->nny1[x] = 0;
+        if (data->nny2[x] >= data->ny) data->nny2[x] = data->ny - 1;
+        if (data->nny1[x] > data->nny2[x]) data->nny1[x] = data->nny2[x];
+    }
+
+    data->minnx = data->nnx2[0] - data->nnx1[0] + 1;
+    for (y = 1; y < data->ny; y++) {
+        int length = data->nnx2[y] - data->nnx1[y] + 1;
+        if (length < data->minnx) data->minnx = length;
+    }
+    data->minny = data->nny2[0] - data->nny1[0] + 1;
+    for (x = 1; x < data->nx; x++) {
+        int length = data->nny2[x] - data->nny1[x] + 1;
+        if (length < data->minny) data->minny = length;
+    }
+
+    return SUCCESS;
+}
+
 /* Assemble the boundary */
 int boundary_assembly(window *data, permuted_vertex *vertex) {
 
-    int i;
-    const int length_x = data->ny;
-    const int length_y = data->nx;
     double **ordered_vertices = NULL;
-    int *nnx_diff;
-    int *nny_diff;
-    nnx_diff = (int *)malloc(sizeof(int) * length_x);
-    nny_diff = (int *)malloc(sizeof(int) * length_y);
-    if (nnx_diff == NULL || nny_diff == NULL) {
-        free(nnx_diff);
-        free(nny_diff);
-        BLEND_Report(BLEND_MSG_ERROR, "boundary: could not allocate stepping-vector differences\n");
-        return FAIL;
-    }
 
     /* Remove duplicate vertices and update row dimensions. TODO: Use pointers here */
     data->row_size = unique_vertices(data->vertices, data->row_size);
     if (data->row_size < 3) {
-        free(nnx_diff);
-        free(nny_diff);
         return FAIL;
     }
 
     ordered_vertices = blend_boundary_copy_points(data->vertices, data->row_size);
     if (ordered_vertices == NULL) {
-        free(nnx_diff);
-        free(nny_diff);
         BLEND_Report(BLEND_MSG_ERROR, "boundary: could not preserve polygon traversal order\n");
         return FAIL;
     }
@@ -2327,8 +2430,6 @@ int boundary_assembly(window *data, permuted_vertex *vertex) {
     /* check that the vertices are bounded */
     if (bounding_boxcheck(data) != SUCCESS) {
         blend_boundary_free_points(ordered_vertices, data->row_size);
-        free(nnx_diff);
-        free(nny_diff);
         return FAIL;
     }
     blend_boundary_restore_points(data->vertices, ordered_vertices, data->row_size);
@@ -2359,56 +2460,5 @@ int boundary_assembly(window *data, permuted_vertex *vertex) {
         return FAIL;
     }
 
-    /* Assemble minimum row-stepping vectors: nnx1 */
-    if (minimum_rowstep(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Assemble maximum row-stepping vectors: nnx2 */
-    if (maximum_rowstep(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Assemble minimum column-stepping vectors: nny1 */
-    if (minimum_columnstep(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Assemble maximum column-stepping vectors: nny2 */
-    if (maximum_columnstep(data, vertex) != SUCCESS) {
-        return FAIL;
-    }
-
-    /* Define minnx and minny */
-    for (i=0; i<data->ny; i++) {
-        nnx_diff[i] = data->nnx2[i] - data->nnx1[i];
-    }
-
-    data->minnx = nnx_diff[0];
-    for (i=1; i<data->ny; i++){
-        if (data->minnx > nnx_diff[i]) {
-            data->minnx = nnx_diff[i];
-        }
-    }
-    /* Minimum length of row stepping vectors */
-    data->minnx = data->minnx + 1;
-
-    for (i=0; i<data->nx; i++) {
-        nny_diff[i] = data->nny2[i] - data->nny1[i];
-    }
-
-    data->minny = nny_diff[0];
-    for (i=1; i<data->nx; i++){
-        if (data->minny > nny_diff[i]) {
-            data->minny = nny_diff[i];
-        }
-    }
-
-    /* Minimum length of column stepping vectors */
-    data->minny = data->minny + 1;
-
-    free(nnx_diff);
-    free(nny_diff);
-
-    return SUCCESS;
+    return boundary_scanline_steps(data);
 }

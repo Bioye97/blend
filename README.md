@@ -8,7 +8,7 @@
 
 ## What is BLEND?
 
-BLEND is a library and collection of command-line programs for localizing functions using arbitrarily shaped support on the regular Cartesian grid. Applications include filter design and the synthesis (or merging) of multidimensional models and datasets (e.g., Ajala & Persaud, [2021](https://scholar.google.com/scholar?q=Effect+of+merging+multiscale+models+on+seismic+wavefield+predictions+near+the+southern+San+Andreas+fault), [2022](https://scholar.google.com/scholar?q=Ground-motion+evaluation+of+hybrid+seismic+velocity+models), and Ajala et al. [2025](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales)).
+BLEND is a library and collection of command-line programs for localizing functions using arbitrarily shaped support on the regular Cartesian grid. Applications include filter design, spectral analysis, and the synthesis (or merging) of multidimensional models and datasets (e.g., Ajala & Persaud, [2021](https://scholar.google.com/scholar?q=Effect+of+merging+multiscale+models+on+seismic+wavefield+predictions+near+the+southern+San+Andreas+fault), [2022](https://scholar.google.com/scholar?q=Ground-motion+evaluation+of+hybrid+seismic+velocity+models), and Ajala et al. [2025](https://www.researchgate.net/publication/392232576_Toward_an_Accessible_Framework_for_Synthesizing_Solid_Earth_Models_Across_Multiple_Scales)).
 
 Full documentation: [https://ajalalab.com/blend/](https://ajalalab.com/blend/)
 
